@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.3.0 - Unreleased
+## v0.3.0 - 2026-06-17
 
 - Add repo-wide CI validation with the `ci` command.
 - Add GitHub workflow annotation output for pull request review.

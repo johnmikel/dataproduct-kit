@@ -1,0 +1,67 @@
+[project]
+name = "dataproduct-kit"
+version = "0.1.0"
+description = "CLI toolkit for validating agent-ready data products from local manifests."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "Apache-2.0"
+authors = [
+  { name = "dataproduct-kit contributors" }
+]
+keywords = ["data-products", "data-contracts", "semantic-layer", "openlineage", "data-quality"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Information Technology",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Database",
+  "Topic :: Software Development :: Quality Assurance",
+]
+dependencies = [
+  "duckdb>=1.1",
+  "email-validator>=2.2",
+  "jinja2>=3.1",
+  "pydantic>=2.8",
+  "pyyaml>=6.0",
+  "rich>=13.7",
+  "typer>=0.12",
+]
+
+[project.urls]
+Homepage = "https://github.com/johnmikel/dataproduct-kit"
+Repository = "https://github.com/johnmikel/dataproduct-kit"
+Issues = "https://github.com/johnmikel/dataproduct-kit/issues"
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.2",
+  "ruff>=0.6",
+]
+
+[project.scripts]
+dataproduct-kit = "dataproduct_kit.cli:app"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+dataproduct_kit = ["templates/saas_churn/**/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]

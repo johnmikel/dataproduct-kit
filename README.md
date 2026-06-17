@@ -1,0 +1,142 @@
+# dataproduct-kit
+
+[![CI](https://github.com/johnmikel/dataproduct-kit/actions/workflows/ci.yml/badge.svg)](https://github.com/johnmikel/dataproduct-kit/actions/workflows/ci.yml)
+
+`dataproduct-kit` is a CLI toolkit for validating agent-ready data products from
+local manifests and DuckDB-backed demo data.
+
+The v1 implementation focuses on one pragmatic slice: contracts, semantic metric
+definitions, quality checks, freshness, policy context, standards-aligned
+exports, OpenLineage-compatible events, and trust reports that humans and agents
+can both consume.
+
+## Why this exists
+
+Enterprise data products are increasingly consumed by BI users, platform teams,
+and AI agents. The hard part is not just finding data; it is knowing whether the
+data has an owner, a contract, a stable metric definition, quality checks,
+freshness context, lineage, and policy constraints.
+
+`dataproduct-kit` makes that trust context explicit and testable in a local repo.
+
+## Install locally
+
+```bash
+python3 -m venv .venv
+.venv/bin/python -m pip install -e ".[dev]"
+```
+
+## Try the SaaS churn demo
+
+```bash
+dataproduct-kit init demo --template saas-churn
+dataproduct-kit validate demo
+dataproduct-kit report demo --format markdown
+dataproduct-kit context demo --metric churn_rate --format json
+dataproduct-kit export odcs demo
+dataproduct-kit export osi demo
+dataproduct-kit emit openlineage demo
+```
+
+Expected validation output:
+
+```text
+status: pass
+```
+
+The Markdown report starts like this:
+
+```markdown
+# Trust Report: SaaS Churn Data Product
+
+| Field | Value |
+| --- | --- |
+| Product ID | saas_churn |
+| Overall status | pass |
+```
+
+## Manifest model
+
+A data product directory contains four source-of-truth files:
+
+- `dataproduct.yaml`: product identity, owner, datasets, freshness SLA.
+- `contract.yaml`: schema fields, classifications, and built-in quality checks.
+- `semantic.yaml`: approved metrics, dimensions, entities, and expressions.
+- `policy.yaml`: allowed purposes, sensitive fields, and AI/BI usage constraints.
+
+The bundled demo uses local CSV data and DuckDB, so it needs no cloud account or
+running database.
+
+## Validate
+
+```bash
+dataproduct-kit validate demo
+```
+
+The command exits with `0` for `pass` or `warn`, and `1` for `fail`.
+
+## Reports and agent context
+
+```bash
+dataproduct-kit report demo --format json
+dataproduct-kit report demo --format markdown
+dataproduct-kit context demo --metric churn_rate --format json
+```
+
+The context command returns metric definition, freshness, policy, and lineage
+metadata. It deliberately does not answer business questions or generate SQL.
+
+Example context fields:
+
+```json
+{
+  "metric": {
+    "name": "churn_rate",
+    "dataset": "subscriptions",
+    "grain": "month"
+  },
+  "quality_status": "pass"
+}
+```
+
+## Standards outputs
+
+```bash
+dataproduct-kit export odcs demo
+dataproduct-kit export osi demo
+dataproduct-kit emit openlineage demo
+```
+
+Exports are standards-aligned from the local profile:
+
+- ODCS-compatible data contract JSON.
+- OSI-inspired semantic model JSON.
+- OpenLineage-compatible validation event JSONL.
+
+## What this catches
+
+The validator returns `fail` for issues such as:
+
+- Missing required columns.
+- Values that cannot cast to the declared contract type.
+- Null or blank values in non-nullable fields.
+- Failed quality checks such as uniqueness, accepted values, and row count.
+- Stale data based on the dataset freshness SLA.
+- Metrics that reference unknown dimensions or invalid expressions.
+- Policy fields that reference columns not declared in the contract.
+
+## Project status
+
+This is `v0.1-alpha`. The local CLI and SaaS churn demo are usable, but the
+manifest profile and standards exports may change before a stable release.
+
+See [ROADMAP.md](ROADMAP.md) for planned standards depth, ecosystem adapters,
+and agent/platform integrations.
+
+## Verify
+
+```bash
+.venv/bin/python -m pytest
+.venv/bin/python -m ruff check .
+.venv/bin/python -m pip check
+```

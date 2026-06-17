@@ -1,0 +1,45 @@
+version: "0.1"
+dataset: subscriptions
+schema:
+  - name: customer_id
+    type: string
+    nullable: false
+    classification: internal
+  - name: plan
+    type: string
+    nullable: false
+    classification: public
+  - name: status
+    type: string
+    nullable: false
+    classification: internal
+  - name: churned
+    type: boolean
+    nullable: false
+    classification: internal
+  - name: monthly_recurring_revenue
+    type: number
+    nullable: false
+    classification: confidential
+  - name: updated_at
+    type: timestamp
+    nullable: false
+    classification: internal
+quality_checks:
+  - name: customer_id_not_null
+    type: not_null
+    column: customer_id
+  - name: customer_id_unique
+    type: unique
+    column: customer_id
+  - name: status_values
+    type: accepted_values
+    column: status
+    values: ["active", "canceled"]
+  - name: positive_mrr
+    type: min
+    column: monthly_recurring_revenue
+    value: 0
+  - name: enough_rows
+    type: row_count_min
+    value: 5

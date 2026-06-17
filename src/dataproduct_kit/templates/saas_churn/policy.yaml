@@ -1,0 +1,13 @@
+allowed_purposes:
+  - retention_reporting
+  - board_metrics
+  - agent_context
+access_notes: Use aggregated churn metrics; do not expose customer-level rows to agents.
+sensitive_fields:
+  - customer_id
+  - monthly_recurring_revenue
+agent_constraints:
+  - Agents may use the approved churn_rate metric only.
+  - Agents must include freshness and quality status with answers.
+bi_constraints:
+  - BI dashboards must use the semantic churn_rate definition.

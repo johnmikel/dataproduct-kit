@@ -100,10 +100,19 @@ The CI command discovers every directory containing `dataproduct.yaml` below the
 path, validates each data product, emits a suite summary, and can write SARIF for
 audit evidence or code-scanning upload.
 
+Repository defaults can live in `dataproduct-kit.toml`:
+
+```toml
+[ci]
+include = ["data-products/**"]
+exclude = ["data-products/sandbox/**"]
+fail_on = "warn"
+```
+
 You can also use the bundled GitHub Action:
 
 ```yaml
-- uses: johnmikel/dataproduct-kit@v0.3.0
+- uses: johnmikel/dataproduct-kit@v0.4.0
   with:
     path: "."
     fail-on: "warn"
@@ -178,12 +187,13 @@ Runnable examples live under `examples/`:
 
 See [docs/usage-scenarios.md](docs/usage-scenarios.md) for concrete usage
 scenarios. See [docs/ci-adoption.md](docs/ci-adoption.md) for pull request gate
-setup and [docs/finding-codes.md](docs/finding-codes.md) for stable finding
-codes.
+setup, [docs/finding-codes.md](docs/finding-codes.md) for stable finding
+codes, and [docs/suppressions.md](docs/suppressions.md) for expiring
+exceptions.
 
 ## Project status
 
-This is `v0.3-alpha`. The local CLI and SaaS churn demo are usable, but the
+This is `v0.4-alpha`. The local CLI and SaaS churn demo are usable, but the
 manifest profile and standards exports may change before a stable release.
 
 See [ROADMAP.md](ROADMAP.md) for planned standards depth, ecosystem adapters,

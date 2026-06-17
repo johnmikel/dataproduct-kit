@@ -24,12 +24,19 @@ def render_text_suite(suite: ValidationSuiteReport) -> str:
         label = product.product_id or "unknown"
         lines.append(f"{product.status}: {product.path}: {label}")
         for finding in product.findings:
+            prefix = "  suppressed" if finding.suppressed else f"  {finding.level}"
+            suffix = (
+                f" (suppressed until {finding.suppression_expires}: "
+                f"{finding.suppression_reason})"
+                if finding.suppressed
+                else ""
+            )
             if finding.check:
                 lines.append(
-                    f"  {finding.level}: {finding.code} ({finding.check}): {finding.message}"
+                    f"{prefix}: {finding.code} ({finding.check}): {finding.message}{suffix}"
                 )
             else:
-                lines.append(f"  {finding.level}: {finding.code}: {finding.message}")
+                lines.append(f"{prefix}: {finding.code}: {finding.message}{suffix}")
     return "\n".join(lines) + "\n"
 
 
@@ -40,6 +47,8 @@ def render_json_suite(suite: ValidationSuiteReport) -> str:
 def render_github_annotations(suite: ValidationSuiteReport) -> str:
     lines: list[str] = []
     for product_path, finding in _iter_findings(suite):
+        if finding.suppressed:
+            continue
         command = "error" if finding.level == "error" else "warning"
         file_uri = _finding_uri(product_path, finding.code)
         properties = (
@@ -62,23 +71,7 @@ def render_sarif_report(suite: ValidationSuiteReport) -> dict:
         }
         for code in sorted({finding.code for _, finding in findings})
     ]
-    results = [
-        {
-            "ruleId": finding.code,
-            "level": "error" if finding.level == "error" else "warning",
-            "message": {"text": finding.message},
-            "locations": [
-                {
-                    "physicalLocation": {
-                        "artifactLocation": {
-                            "uri": _finding_uri(product_path, finding.code),
-                        }
-                    }
-                }
-            ],
-        }
-        for product_path, finding in findings
-    ]
+    results = [_sarif_result(product_path, finding) for product_path, finding in findings]
     return {
         "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
         "version": "2.1.0",
@@ -95,6 +88,34 @@ def render_sarif_report(suite: ValidationSuiteReport) -> dict:
             }
         ],
     }
+
+
+def _sarif_result(product_path: str, finding: Finding) -> dict:
+    result = {
+        "ruleId": finding.code,
+        "level": "error" if finding.level == "error" else "warning",
+        "message": {"text": finding.message},
+        "locations": [
+            {
+                "physicalLocation": {
+                    "artifactLocation": {
+                        "uri": _finding_uri(product_path, finding.code),
+                    }
+                }
+            }
+        ],
+    }
+    if finding.suppressed:
+        result["suppressions"] = [
+            {
+                "kind": "external",
+                "justification": (
+                    f"{finding.suppression_reason} "
+                    f"Expires {finding.suppression_expires}."
+                ),
+            }
+        ]
+    return result
 
 
 def write_sarif_report(suite: ValidationSuiteReport, out: Path) -> None:

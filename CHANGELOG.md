@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.4.0 - Unreleased
+
+- Add repository config with CI discovery filters and default `fail_on` policy.
+- Add suppression support with expiry validation and SARIF suppression metadata.
+- Add release smoke install script and run it from the verification script.
+- Add dogfood, release smoke, and trusted publishing GitHub workflows.
+- Add suppression documentation and public issue templates.
+
 ## v0.3.0 - 2026-06-17
 
 - Add repo-wide CI validation with the `ci` command.

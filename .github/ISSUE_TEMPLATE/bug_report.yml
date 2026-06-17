@@ -1,0 +1,35 @@
+name: Bug report
+description: Report a reproducible dataproduct-kit problem.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What happened, and what did you expect instead?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction steps
+      description: Include the command, manifest snippet, and smallest data sample you can share.
+      placeholder: |
+        1. Run `dataproduct-kit ...`
+        2. Observe ...
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: dataproduct-kit version
+      placeholder: "0.4.0"
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Output
+      description: Paste the relevant text or JSON output.
+      render: shell

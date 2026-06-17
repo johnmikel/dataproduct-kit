@@ -21,6 +21,22 @@ one, and returns a suite status:
 
 Use `--fail-on warn` when warnings should block a merge.
 
+## Repository Config
+
+Create `dataproduct-kit.toml` at the repository root to make local and CI
+behavior consistent:
+
+```toml
+[ci]
+include = ["data-products/**"]
+exclude = ["data-products/sandbox/**"]
+fail_on = "warn"
+```
+
+When `--fail-on` is omitted, `dataproduct-kit ci` uses the config value. See
+[suppressions.md](suppressions.md) for temporary exception handling with expiry
+dates.
+
 ## Reusable GitHub Action
 
 ```yaml
@@ -40,7 +56,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: johnmikel/dataproduct-kit@v0.3.0
+      - uses: johnmikel/dataproduct-kit@v0.4.0
         with:
           path: "."
           fail-on: "warn"

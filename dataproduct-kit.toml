@@ -1,0 +1,4 @@
+[ci]
+include = ["examples/**"]
+exclude = ["examples/fail/**"]
+fail_on = "warn"

@@ -19,6 +19,7 @@ python3 -m venv .venv
 .venv/bin/python -m pytest
 .venv/bin/python -m ruff check .
 .venv/bin/python -m pip check
+./scripts/verify.sh
 ```
 
 ## Development guidelines

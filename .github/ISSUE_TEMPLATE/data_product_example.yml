@@ -1,0 +1,26 @@
+name: Data product example
+description: Propose a new example that teaches a realistic data product scenario.
+title: "[Example]: "
+labels: ["documentation", "examples"]
+body:
+  - type: input
+    id: domain
+    attributes:
+      label: Domain
+      placeholder: "finance revenue, marketing attribution, product usage"
+    validations:
+      required: true
+  - type: textarea
+    id: scenario
+    attributes:
+      label: Scenario
+      description: What contract, metric, freshness, policy, or quality concern should this example teach?
+    validations:
+      required: true
+  - type: textarea
+    id: data
+    attributes:
+      label: Synthetic data shape
+      description: List the datasets and key columns. Do not include real customer data.
+    validations:
+      required: true

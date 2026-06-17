@@ -1,31 +1,38 @@
 from __future__ import annotations
 
+from datetime import date
+from fnmatch import fnmatchcase
 from pathlib import Path
 
+from dataproduct_kit.config import ConfigLoadError, KitConfig, SuppressionConfig, load_config
+from dataproduct_kit.finding_codes import KNOWN_FINDING_CODES
 from dataproduct_kit.loader import ManifestLoadError, load_project
 from dataproduct_kit.models import Finding, SuiteProductReport, ValidationSuiteReport
 from dataproduct_kit.validators import validate_project
 
 
-def discover_project_dirs(root: Path) -> list[Path]:
+def discover_project_dirs(root: Path, config: KitConfig | None = None) -> list[Path]:
     """Find candidate data product directories under a repo root."""
     root = root.resolve()
     if root.is_file():
         root = root.parent
     candidates = {path.parent for path in root.rglob("dataproduct.yaml")}
-    return sorted(candidates, key=lambda path: _relative_path(path, root))
+    config = config or KitConfig()
+    filtered = [
+        path
+        for path in candidates
+        if _included(_relative_path(path, root), config.ci.include, config.ci.exclude)
+    ]
+    return sorted(filtered, key=lambda path: _relative_path(path, root))
 
 
 def validate_suite(root: Path) -> ValidationSuiteReport:
     """Validate every data product discovered below root."""
     root = root.resolve()
-    product_dirs = discover_project_dirs(root)
-    if not product_dirs:
-        finding = Finding(
-            level="error",
-            code="discovery.no_products",
-            message="no dataproduct.yaml files found",
-        )
+    try:
+        config = load_config(root)
+    except ConfigLoadError as error:
+        finding = Finding(level="error", code="config.invalid", message=str(error))
         return ValidationSuiteReport(
             status="fail",
             summary={
@@ -34,17 +41,55 @@ def validate_suite(root: Path) -> ValidationSuiteReport:
                 "products_warned": 0,
                 "products_failed": 0,
                 "findings_total": 1,
+                "findings_suppressed": 0,
             },
+            config={"fail_on": "fail", "include": ["**"], "exclude": []},
             findings=[finding],
             products=[],
         )
+    config_findings = _validate_suppressions(config)
+    product_dirs = discover_project_dirs(root, config)
+    if not product_dirs:
+        finding = Finding(
+            level="error",
+            code="discovery.no_products",
+            message="no dataproduct.yaml files found",
+        )
+        findings = [*config_findings, finding]
+        return ValidationSuiteReport(
+            status="fail",
+            summary={
+                "products_total": 0,
+                "products_passed": 0,
+                "products_warned": 0,
+                "products_failed": 0,
+                "findings_total": len(findings),
+                "findings_suppressed": 0,
+            },
+            config=_config_summary(config),
+            findings=findings,
+            products=[],
+        )
 
-    products = [_validate_product(root, product_dir) for product_dir in product_dirs]
+    products = [
+        _apply_suppressions(_validate_product(root, product_dir), config)
+        for product_dir in product_dirs
+    ]
     products_passed = sum(1 for product in products if product.status == "pass")
     products_warned = sum(1 for product in products if product.status == "warn")
     products_failed = sum(1 for product in products if product.status == "fail")
-    findings_total = sum(len(product.findings) for product in products)
-    status = "fail" if products_failed else "warn" if products_warned else "pass"
+    findings_total = len(config_findings) + sum(len(product.findings) for product in products)
+    findings_suppressed = sum(
+        1 for product in products for finding in product.findings if finding.suppressed
+    )
+    config_failed = any(finding.level == "error" for finding in config_findings)
+    status = (
+        "fail"
+        if config_failed or products_failed
+        else "warn"
+        if products_warned
+        else "pass"
+    )
     return ValidationSuiteReport(
         status=status,
         summary={
@@ -53,7 +98,10 @@ def validate_suite(root: Path) -> ValidationSuiteReport:
             "products_warned": products_warned,
             "products_failed": products_failed,
             "findings_total": findings_total,
+            "findings_suppressed": findings_suppressed,
         },
+        config=_config_summary(config),
+        findings=config_findings,
         products=products,
     )
 
@@ -88,6 +136,99 @@ def _validate_product(root: Path, product_dir: Path) -> SuiteProductReport:
         findings=report.findings,
         trust_report=report,
     )
+
+
+def _apply_suppressions(product: SuiteProductReport, config: KitConfig) -> SuiteProductReport:
+    findings = [
+        _suppress_finding(finding, product.path, config.suppressions)
+        for finding in product.findings
+    ]
+    unsuppressed_errors = sum(
+        1 for finding in findings if finding.level == "error" and not finding.suppressed
+    )
+    unsuppressed_warnings = sum(
+        1 for finding in findings if finding.level == "warning" and not finding.suppressed
+    )
+    suppressed = sum(1 for finding in findings if finding.suppressed)
+    status = "fail" if unsuppressed_errors else "warn" if unsuppressed_warnings else "pass"
+    summary = dict(product.summary)
+    summary["checks_failed"] = unsuppressed_errors
+    summary["checks_warned"] = unsuppressed_warnings
+    summary["checks_suppressed"] = suppressed
+    return product.model_copy(
+        update={
+            "status": status,
+            "summary": summary,
+            "findings": findings,
+        }
+    )
+
+
+def _suppress_finding(
+    finding: Finding,
+    product_path: str,
+    suppressions: list[SuppressionConfig],
+) -> Finding:
+    if finding.suppressed:
+        return finding
+    for suppression in suppressions:
+        if suppression.expires < date.today():
+            continue
+        if suppression.code == finding.code and _path_matches(product_path, suppression.path):
+            return finding.model_copy(
+                update={
+                    "suppressed": True,
+                    "suppression_reason": suppression.reason,
+                    "suppression_expires": suppression.expires.isoformat(),
+                }
+            )
+    return finding
+
+
+def _validate_suppressions(config: KitConfig) -> list[Finding]:
+    findings: list[Finding] = []
+    for suppression in config.suppressions:
+        if suppression.code not in KNOWN_FINDING_CODES:
+            findings.append(
+                Finding(
+                    level="error",
+                    code="suppression.unknown_code",
+                    message=f"suppression references unknown finding code '{suppression.code}'",
+                )
+            )
+        if suppression.expires < date.today():
+            findings.append(
+                Finding(
+                    level="error",
+                    code="suppression.expired",
+                    message=(
+                        f"suppression for '{suppression.code}' at '{suppression.path}' "
+                        f"expired on {suppression.expires.isoformat()}"
+                    ),
+                )
+            )
+    return findings
+
+
+def _included(path: str, include: list[str], exclude: list[str]) -> bool:
+    return _matches_any(path, include) and not _matches_any(path, exclude)
+
+
+def _matches_any(path: str, patterns: list[str]) -> bool:
+    return any(_path_matches(path, pattern) for pattern in patterns)
+
+
+def _path_matches(path: str, pattern: str) -> bool:
+    return fnmatchcase(path, pattern) or fnmatchcase(f"{path}/dataproduct.yaml", pattern)
+
+
+def _config_summary(config: KitConfig) -> dict:
+    return {
+        "include": config.ci.include,
+        "exclude": config.ci.exclude,
+        "fail_on": config.ci.fail_on,
+        "suppressions": len(config.suppressions),
+    }
 
 
 def _relative_path(path: Path, root: Path) -> str:

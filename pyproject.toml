@@ -1,6 +1,6 @@
 [project]
 name = "dataproduct-kit"
-version = "0.3.0"
+version = "0.4.0"
 description = "CLI toolkit for validating agent-ready data products from local manifests."
 readme = "README.md"
 requires-python = ">=3.11"

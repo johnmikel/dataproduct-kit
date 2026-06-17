@@ -1,0 +1,31 @@
+name: dataproduct-kit Dogfood
+
+on:
+  push:
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  dogfood:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Run local action against passing examples
+        uses: ./
+        with:
+          path: examples/pass
+          fail-on: warn
+          format: github
+          sarif: dataproduct-kit-dogfood.sarif.json
+
+      - name: Upload SARIF
+        if: always() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: dataproduct-kit-dogfood.sarif.json

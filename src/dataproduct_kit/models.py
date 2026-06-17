@@ -125,6 +125,9 @@ class Finding(BaseModel):
     code: str
     message: str
     check: str | None = None
+    suppressed: bool = False
+    suppression_reason: str | None = None
+    suppression_expires: str | None = None
 
 
 class FreshnessResult(BaseModel):
@@ -172,5 +175,6 @@ class SuiteProductReport(BaseModel):
 class ValidationSuiteReport(BaseModel):
     status: Literal["pass", "warn", "fail"]
     summary: dict[str, int]
+    config: dict[str, Any] = Field(default_factory=dict)
     findings: list[Finding] = Field(default_factory=list)
     products: list[SuiteProductReport] = Field(default_factory=list)

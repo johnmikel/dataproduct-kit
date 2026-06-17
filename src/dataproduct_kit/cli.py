@@ -71,9 +71,9 @@ def ci(
         typer.Option("--format", help="Output format."),
     ] = "text",
     fail_on: Annotated[
-        Literal["fail", "warn"],
+        str | None,
         typer.Option("--fail-on", help="Exit nonzero at this status threshold."),
-    ] = "fail",
+    ] = None,
     sarif: Annotated[
         Path | None,
         typer.Option("--sarif", help="Write SARIF report to this file."),
@@ -81,6 +81,10 @@ def ci(
 ) -> None:
     """Validate every data product under a repo and emit CI-friendly output."""
     suite = validate_suite(path)
+    effective_fail_on = fail_on or str(suite.config.get("fail_on", "fail"))
+    if effective_fail_on not in {"fail", "warn"}:
+        typer.echo("--fail-on must be one of: fail, warn", err=True)
+        raise typer.Exit(2)
     if sarif is not None:
         write_sarif_report(suite, sarif)
     if format == "json":
@@ -89,7 +93,7 @@ def ci(
         typer.echo(render_github_annotations(suite), nl=False)
     else:
         typer.echo(render_text_suite(suite), nl=False)
-    if _should_fail(suite.status, fail_on):
+    if _should_fail(suite.status, effective_fail_on):
         raise typer.Exit(1)
 
 

@@ -26,6 +26,7 @@ def test_validate_suite_discovers_products_and_summarizes_status(tmp_path: Path)
         "products_warned": 0,
         "products_failed": 1,
         "findings_total": 1,
+        "findings_suppressed": 0,
     }
     assert [product.path for product in suite.products] == ["products/fail", "products/pass"]
     failed_product = suite.products[0]

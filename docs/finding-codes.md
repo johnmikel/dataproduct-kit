@@ -7,8 +7,13 @@ called out in the changelog.
 
 ## Discovery
 
+- `config.invalid`: `dataproduct-kit.toml` could not be parsed or did not match
+  the supported config shape.
 - `discovery.no_products`: no `dataproduct.yaml` files were found below the path
   passed to `dataproduct-kit ci`.
+- `suppression.expired`: a configured suppression is past its expiry date.
+- `suppression.unknown_code`: a configured suppression references an unknown
+  finding code.
 
 ## Manifest Loading
 

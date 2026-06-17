@@ -1,0 +1,32 @@
+name: Feature request
+description: Suggest a focused improvement for the CLI, manifests, validators, or standards output.
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: use-case
+    attributes:
+      label: Use case
+      description: What workflow would this improve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Describe the smallest useful version of the change.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - CLI
+        - Manifest model
+        - Validation
+        - Standards export
+        - Documentation
+        - GitHub Action
+    validations:
+      required: true

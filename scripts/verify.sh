@@ -9,3 +9,4 @@ PYTHON="${PYTHON:-python3}"
 rm -rf dist build
 "$PYTHON" -m build
 "$PYTHON" -m twine check dist/*
+./scripts/smoke-install.sh dist/dataproduct_kit-*.whl

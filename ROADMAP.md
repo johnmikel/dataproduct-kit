@@ -29,13 +29,21 @@ from local manifests.
 - Add a reusable composite GitHub Action.
 - Document stable finding codes for policy gates and exceptions.
 
-## v0.4 ecosystem adapters
+## v0.4 production readiness
+
+- Add repository config for CI discovery filters and default gate policy.
+- Add expiring suppressions for known findings.
+- Add release artifact smoke testing.
+- Add trusted publishing workflow scaffolding for PyPI/TestPyPI.
+- Add public maintainer issue templates and starter backlog.
+
+## v0.5 ecosystem adapters
 
 - Optional Great Expectations adapter.
 - Optional dbt tests and metrics adapter.
 - Optional DataHub or OpenMetadata export file generation.
 
-## v0.5 agent and platform integrations
+## v0.6 agent and platform integrations
 
 - MCP server only after policy, freshness, and semantic context are stable.
 - Warehouse-backed demos for Postgres and one cloud warehouse.

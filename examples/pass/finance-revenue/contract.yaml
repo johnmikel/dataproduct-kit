@@ -1,0 +1,63 @@
+version: "0.1"
+dataset: transactions
+schema:
+  - name: transaction_id
+    type: string
+    nullable: false
+    classification: internal
+  - name: customer_id
+    type: string
+    nullable: false
+    classification: internal
+  - name: invoice_id
+    type: string
+    nullable: false
+    classification: internal
+  - name: amount
+    type: number
+    nullable: false
+    classification: confidential
+  - name: currency
+    type: string
+    nullable: false
+    classification: internal
+  - name: product_category
+    type: string
+    nullable: true
+    classification: public
+  - name: region
+    type: string
+    nullable: true
+    classification: public
+  - name: transaction_date
+    type: date
+    nullable: false
+    classification: internal
+  - name: updated_at
+    type: timestamp
+    nullable: false
+    classification: internal
+quality_checks:
+  - name: transaction_id_not_null
+    type: not_null
+    column: transaction_id
+  - name: transaction_id_unique
+    type: unique
+    column: transaction_id
+  - name: customer_id_not_null
+    type: not_null
+    column: customer_id
+  - name: invoice_id_not_null
+    type: not_null
+    column: invoice_id
+  - name: currency_values
+    type: accepted_values
+    column: currency
+    values: ["USD", "EUR", "GBP"]
+  - name: non_negative_amount
+    type: min
+    column: amount
+    value: 0
+  - name: enough_rows
+    type: row_count_min
+    value: 5

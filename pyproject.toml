@@ -55,7 +55,7 @@ build-backend = "setuptools.build_meta"
 where = ["src"]
 
 [tool.setuptools.package-data]
-dataproduct_kit = ["templates/saas_churn/**/*"]
+dataproduct_kit = ["templates/saas_churn/**/*", "templates/finance_revenue/**/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

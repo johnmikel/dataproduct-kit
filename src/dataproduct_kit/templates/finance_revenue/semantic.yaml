@@ -1,0 +1,21 @@
+metrics:
+  - name: net_revenue
+    label: Net Revenue
+    description: Sum of all transaction amounts in the reporting period.
+    dataset: transactions
+    expression: "sum(amount)"
+    grain: day
+    dimensions: [product_category, region]
+dimensions:
+  - name: product_category
+    dataset: transactions
+    column: product_category
+    type: string
+  - name: region
+    dataset: transactions
+    column: region
+    type: string
+entities:
+  - name: customer
+    dataset: transactions
+    key: customer_id

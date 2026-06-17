@@ -1,0 +1,14 @@
+allowed_purposes:
+  - financial_reporting
+  - revenue_forecasting
+  - agent_context
+access_notes: Use aggregated net revenue metrics only; do not expose transaction-level rows to agents.
+sensitive_fields:
+  - customer_id
+  - invoice_id
+  - amount
+agent_constraints:
+  - Agents may use the approved net_revenue metric only.
+  - Agents must include freshness and quality status with answers.
+bi_constraints:
+  - BI dashboards must use the semantic net_revenue definition.

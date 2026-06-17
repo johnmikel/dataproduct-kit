@@ -89,6 +89,28 @@ dataproduct-kit validate demo
 
 The command exits with `0` for `pass` or `warn`, and `1` for `fail`.
 
+For repository-wide pull request checks, use the CI command:
+
+```bash
+dataproduct-kit ci . --format text
+dataproduct-kit ci . --format github --fail-on warn --sarif dataproduct-kit.sarif.json
+```
+
+The CI command discovers every directory containing `dataproduct.yaml` below the
+path, validates each data product, emits a suite summary, and can write SARIF for
+audit evidence or code-scanning upload.
+
+You can also use the bundled GitHub Action:
+
+```yaml
+- uses: johnmikel/dataproduct-kit@v0.3.0
+  with:
+    path: "."
+    fail-on: "warn"
+    format: "github"
+    sarif: "dataproduct-kit.sarif.json"
+```
+
 ## Reports and agent context
 
 ```bash
@@ -155,11 +177,13 @@ Runnable examples live under `examples/`:
 - `examples/fail/policy-gap`
 
 See [docs/usage-scenarios.md](docs/usage-scenarios.md) for concrete usage
-scenarios.
+scenarios. See [docs/ci-adoption.md](docs/ci-adoption.md) for pull request gate
+setup and [docs/finding-codes.md](docs/finding-codes.md) for stable finding
+codes.
 
 ## Project status
 
-This is `v0.2-alpha`. The local CLI and SaaS churn demo are usable, but the
+This is `v0.3-alpha`. The local CLI and SaaS churn demo are usable, but the
 manifest profile and standards exports may change before a stable release.
 
 See [ROADMAP.md](ROADMAP.md) for planned standards depth, ecosystem adapters,

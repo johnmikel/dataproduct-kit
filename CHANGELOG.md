@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.3.0 - Unreleased
+
+- Add repo-wide CI validation with the `ci` command.
+- Add GitHub workflow annotation output for pull request review.
+- Add SARIF output for security/code-scanning style evidence.
+- Add a reusable composite GitHub Action.
+- Add finding-code and CI adoption documentation.
+- Update GitHub Actions workflow dependencies to Node 24-compatible major versions.
+
 ## v0.2.0 - 2026-06-17
 
 - Add machine-readable validation output with `validate --format json`.

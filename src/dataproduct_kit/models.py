@@ -157,3 +157,20 @@ class TrustReport(BaseModel):
     freshness: list[FreshnessResult]
     semantic: SemanticReport
     policy: dict[str, Any]
+
+
+class SuiteProductReport(BaseModel):
+    path: str
+    product_id: str | None = None
+    product_name: str | None = None
+    status: Literal["pass", "warn", "fail"]
+    summary: dict[str, int]
+    findings: list[Finding]
+    trust_report: TrustReport | None = None
+
+
+class ValidationSuiteReport(BaseModel):
+    status: Literal["pass", "warn", "fail"]
+    summary: dict[str, int]
+    findings: list[Finding] = Field(default_factory=list)
+    products: list[SuiteProductReport] = Field(default_factory=list)

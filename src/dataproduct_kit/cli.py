@@ -6,11 +6,18 @@ from typing import Annotated, Literal
 
 import typer
 
+from dataproduct_kit.ci import (
+    render_github_annotations,
+    render_json_suite,
+    render_text_suite,
+    write_sarif_report,
+)
 from dataproduct_kit.context import build_agent_context
 from dataproduct_kit.loader import ManifestLoadError, load_project
 from dataproduct_kit.reports import render_json_report, render_markdown_report
 from dataproduct_kit.schemas import build_all_schemas, build_schema, write_schema_files
 from dataproduct_kit.standards import emit_openlineage, export_odcs, export_osi
+from dataproduct_kit.suite import validate_suite
 from dataproduct_kit.templates import scaffold_template
 from dataproduct_kit.validators import validate_project
 
@@ -53,6 +60,36 @@ def validate(
         for finding in report.findings:
             typer.echo(f"{finding.level}: {finding.code}: {finding.message}")
     if _should_fail(report.status, fail_on):
+        raise typer.Exit(1)
+
+
+@app.command()
+def ci(
+    path: Annotated[Path, typer.Argument(help="Repo or data product directory.")] = Path("."),
+    format: Annotated[
+        Literal["text", "json", "github"],
+        typer.Option("--format", help="Output format."),
+    ] = "text",
+    fail_on: Annotated[
+        Literal["fail", "warn"],
+        typer.Option("--fail-on", help="Exit nonzero at this status threshold."),
+    ] = "fail",
+    sarif: Annotated[
+        Path | None,
+        typer.Option("--sarif", help="Write SARIF report to this file."),
+    ] = None,
+) -> None:
+    """Validate every data product under a repo and emit CI-friendly output."""
+    suite = validate_suite(path)
+    if sarif is not None:
+        write_sarif_report(suite, sarif)
+    if format == "json":
+        typer.echo(render_json_suite(suite), nl=False)
+    elif format == "github":
+        typer.echo(render_github_annotations(suite), nl=False)
+    else:
+        typer.echo(render_text_suite(suite), nl=False)
+    if _should_fail(suite.status, fail_on):
         raise typer.Exit(1)
 
 

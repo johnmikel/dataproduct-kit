@@ -198,11 +198,12 @@ def _validate_quality(
     findings: list[Finding],
 ) -> int:
     passes = 0
-    available = {field.name for field in fields}
+    contract_columns = {field.name for field in fields}
+    dataset_columns = _columns(con, table)
     for field in fields:
         if (
             not field.nullable
-            and field.name in available
+            and field.name in contract_columns
             and _column_exists(con, table, field.name)
         ):
             failures = _blank_count(con, table, field.name)
@@ -249,7 +250,9 @@ def _validate_quality(
                 )
             )
             continue
-        if check.column and not _column_exists(con, table, check.column):
+        if check.column and check.column not in dataset_columns:
+            if check.column in contract_columns:
+                continue
             findings.append(
                 _error(
                     "quality.unknown_column",

@@ -21,13 +21,21 @@ from local manifests.
 - Add more deterministic golden fixtures for standards output.
 - Add JSON Schema generation and example projects for common pass/fail scenarios.
 
-## v0.3 ecosystem adapters
+## v0.3 CI adoption
+
+- Add repository-wide data product discovery.
+- Add CI suite reports across many products.
+- Add GitHub workflow annotations and SARIF output.
+- Add a reusable composite GitHub Action.
+- Document stable finding codes for policy gates and exceptions.
+
+## v0.4 ecosystem adapters
 
 - Optional Great Expectations adapter.
 - Optional dbt tests and metrics adapter.
 - Optional DataHub or OpenMetadata export file generation.
 
-## v0.4 agent and platform integrations
+## v0.5 agent and platform integrations
 
 - MCP server only after policy, freshness, and semantic context are stable.
 - Warehouse-backed demos for Postgres and one cloud warehouse.

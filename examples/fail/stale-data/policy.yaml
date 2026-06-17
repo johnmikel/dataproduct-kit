@@ -1,0 +1,9 @@
+allowed_purposes:
+  - retention_reporting
+access_notes: Use aggregated churn metrics only.
+sensitive_fields:
+  - customer_id
+agent_constraints:
+  - Agents must include freshness status with answers.
+bi_constraints:
+  - BI dashboards must use the semantic churn_rate definition.

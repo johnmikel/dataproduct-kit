@@ -1,0 +1,18 @@
+id: saas_churn
+name: SaaS Churn Data Product
+domain: growth
+version: "1.0.0"
+description: Example where a metric references an undefined dimension.
+owner:
+  name: Growth Analytics
+  email: growth-analytics@example.com
+  team: Growth
+datasets:
+  - id: subscriptions
+    path: data/subscriptions.csv
+    format: csv
+    table: subscriptions
+    freshness:
+      column: updated_at
+      max_age_hours: 48
+      reference_time: "2026-06-17T00:00:00Z"

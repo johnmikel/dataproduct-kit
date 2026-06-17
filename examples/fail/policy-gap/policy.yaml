@@ -1,0 +1,10 @@
+allowed_purposes:
+  - retention_reporting
+access_notes: Use aggregated churn metrics only.
+sensitive_fields:
+  - customer_id
+  - region
+agent_constraints:
+  - Agents may use the approved churn_rate metric only.
+bi_constraints:
+  - BI dashboards must use the semantic churn_rate definition.

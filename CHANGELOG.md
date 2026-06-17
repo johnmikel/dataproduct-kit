@@ -7,6 +7,7 @@
 - Add release smoke install script and run it from the verification script.
 - Add dogfood, release smoke, and trusted publishing GitHub workflows.
 - Add suppression documentation and public issue templates.
+- Add Trusted Publishing setup docs and a v0.4.0 release checklist.
 
 ## v0.3.0 - 2026-06-17
 

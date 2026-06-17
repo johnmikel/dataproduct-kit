@@ -22,6 +22,10 @@ python3 -m venv .venv
 ./scripts/verify.sh
 ```
 
+Release maintainers should also review [docs/publishing.md](docs/publishing.md)
+and [docs/release-checklist.md](docs/release-checklist.md) before creating a
+GitHub Release.
+
 ## Development guidelines
 
 - Keep v1 local-first: no cloud credentials or long-running services required.

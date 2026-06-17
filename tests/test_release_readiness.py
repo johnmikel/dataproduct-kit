@@ -100,3 +100,28 @@ def test_issue_templates_exist_for_public_contributors() -> None:
     assert (templates / "bug_report.yml").exists()
     assert (templates / "feature_request.yml").exists()
     assert (templates / "data_product_example.yml").exists()
+
+
+def test_trusted_publishing_docs_cover_setup_and_dry_run() -> None:
+    docs = (ROOT / "docs/publishing.md").read_text(encoding="utf-8")
+
+    assert ".github/workflows/publish.yml" in docs
+    assert "testpypi" in docs
+    assert "pypi" in docs
+    assert "id-token: write" in docs
+    assert "repository-url: https://test.pypi.org/legacy/" in docs
+    assert "No PyPI API token" in docs
+    assert "TestPyPI dry run" in docs
+
+
+def test_release_checklist_documents_v040_cut_steps() -> None:
+    docs = (ROOT / "docs/release-checklist.md").read_text(encoding="utf-8")
+
+    assert "git checkout main" in docs
+    assert "git status --short --branch" in docs
+    assert "./scripts/verify.sh" in docs
+    assert "v0.4.0 - 2026-06-17" in docs
+    assert "git tag -a v0.4.0" in docs
+    assert "git push origin v0.4.0" in docs
+    assert "GitHub Release" in docs
+    assert ".github/workflows/publish.yml" in docs

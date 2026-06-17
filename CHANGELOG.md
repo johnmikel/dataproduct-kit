@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.2.0 - Unreleased
+## v0.2.0 - 2026-06-17
 
 - Add machine-readable validation output with `validate --format json`.
 - Add strict CI behavior with `validate --fail-on warn`.

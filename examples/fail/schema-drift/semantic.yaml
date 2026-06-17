@@ -1,0 +1,17 @@
+metrics:
+  - name: churn_rate
+    label: Churn Rate
+    description: Share of subscriptions that churned during the reporting grain.
+    dataset: subscriptions
+    expression: "sum(case when churned then 1 else 0 end)::double / nullif(count(*), 0)"
+    grain: month
+    dimensions: [plan]
+dimensions:
+  - name: plan
+    dataset: subscriptions
+    column: plan
+    type: string
+entities:
+  - name: customer
+    dataset: subscriptions
+    key: customer_id

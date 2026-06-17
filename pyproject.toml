@@ -1,6 +1,6 @@
 [project]
 name = "dataproduct-kit"
-version = "0.1.0"
+version = "0.2.0"
 description = "CLI toolkit for validating agent-ready data products from local manifests."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -38,8 +38,10 @@ Issues = "https://github.com/johnmikel/dataproduct-kit/issues"
 
 [project.optional-dependencies]
 dev = [
+  "build>=1.2",
   "pytest>=8.2",
   "ruff>=0.6",
+  "twine>=5.1",
 ]
 
 [project.scripts]

@@ -1,0 +1,6 @@
+customer_id,plan,status,churned,updated_at
+cust_001,pro,active,false,2026-06-16T09:00:00Z
+cust_002,pro,canceled,true,2026-06-16T09:30:00Z
+cust_003,business,active,false,2026-06-16T10:00:00Z
+cust_004,business,canceled,true,2026-06-16T10:30:00Z
+cust_005,starter,active,false,2026-06-16T11:00:00Z

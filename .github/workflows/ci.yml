@@ -2,7 +2,6 @@ name: CI
 
 on:
   push:
-    branches: ["main"]
   pull_request:
     branches: ["main"]
 
@@ -30,11 +29,5 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -e ".[dev]"
 
-      - name: Lint
-        run: python -m ruff check .
-
-      - name: Test
-        run: python -m pytest
-
-      - name: Check dependency metadata
-        run: python -m pip check
+      - name: Verify
+        run: ./scripts/verify.sh

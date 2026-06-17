@@ -9,6 +9,7 @@ import typer
 from dataproduct_kit.context import build_agent_context
 from dataproduct_kit.loader import ManifestLoadError, load_project
 from dataproduct_kit.reports import render_json_report, render_markdown_report
+from dataproduct_kit.schemas import build_all_schemas, build_schema, write_schema_files
 from dataproduct_kit.standards import emit_openlineage, export_odcs, export_osi
 from dataproduct_kit.templates import scaffold_template
 from dataproduct_kit.validators import validate_project
@@ -31,14 +32,27 @@ def init(
 
 
 @app.command()
-def validate(path: Annotated[Path, typer.Argument(help="Data product directory.")]) -> None:
+def validate(
+    path: Annotated[Path, typer.Argument(help="Data product directory.")],
+    format: Annotated[
+        Literal["text", "json"],
+        typer.Option("--format", help="Output format."),
+    ] = "text",
+    fail_on: Annotated[
+        Literal["fail", "warn"],
+        typer.Option("--fail-on", help="Exit nonzero at this status threshold."),
+    ] = "fail",
+) -> None:
     """Validate manifests, data, quality checks, semantics, freshness, and policy."""
     project = _load_or_exit(path)
     report = validate_project(project)
-    typer.echo(f"status: {report.status}")
-    for finding in report.findings:
-        typer.echo(f"{finding.level}: {finding.code}: {finding.message}")
-    if report.status == "fail":
+    if format == "json":
+        typer.echo(render_json_report(report), nl=False)
+    else:
+        typer.echo(f"status: {report.status}")
+        for finding in report.findings:
+            typer.echo(f"{finding.level}: {finding.code}: {finding.message}")
+    if _should_fail(report.status, fail_on):
         raise typer.Exit(1)
 
 
@@ -83,10 +97,44 @@ def export_command(
         typer.Argument(help="Standard export to emit."),
     ],
     path: Annotated[Path, typer.Argument(help="Data product directory.")],
+    out: Annotated[Path | None, typer.Option("--out", help="Output JSON file path.")] = None,
 ) -> None:
     """Export standards-aligned JSON from the local profile."""
     project = _load_or_exit(path)
     payload = export_odcs(project) if standard == "odcs" else export_osi(project)
+    rendered = json.dumps(payload, indent=2, sort_keys=True) + "\n"
+    if out is None:
+        typer.echo(rendered, nl=False)
+    else:
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(rendered, encoding="utf-8")
+        typer.echo(str(out))
+
+
+@app.command()
+def schema(
+    name: Annotated[
+        Literal["dataproduct", "contract", "semantic", "policy", "all"],
+        typer.Argument(help="Schema to emit."),
+    ],
+    out: Annotated[Path | None, typer.Option("--out", help="Directory for schema files.")] = None,
+) -> None:
+    """Emit JSON Schema for manifest files."""
+    if out is not None:
+        if name == "all":
+            written = write_schema_files(out)
+        else:
+            out.mkdir(parents=True, exist_ok=True)
+            path = out / f"{name}.schema.json"
+            path.write_text(
+                json.dumps(build_schema(name), indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+            written = [path]
+        for path in written:
+            typer.echo(str(path))
+        return
+    payload = build_all_schemas() if name == "all" else build_schema(name)
     typer.echo(json.dumps(payload, indent=2, sort_keys=True) + "\n", nl=False)
 
 
@@ -113,3 +161,9 @@ def _load_or_exit(path: Path):
     except ManifestLoadError as error:
         typer.echo(str(error), err=True)
         raise typer.Exit(1) from error
+
+
+def _should_fail(status: str, fail_on: str) -> bool:
+    if status == "fail":
+        return True
+    return fail_on == "warn" and status == "warn"

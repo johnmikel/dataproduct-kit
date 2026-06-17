@@ -19,6 +19,7 @@ from local manifests.
 - Add schema/version checks for exported standards payloads.
 - Add import support for a narrow ODCS subset.
 - Add more deterministic golden fixtures for standards output.
+- Add JSON Schema generation and example projects for common pass/fail scenarios.
 
 ## v0.3 ecosystem adapters
 

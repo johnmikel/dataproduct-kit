@@ -1,0 +1,6 @@
+customer_id,plan,status,churned,monthly_recurring_revenue,updated_at
+cust_001,pro,active,false,99.0,2026-06-10T09:00:00Z
+cust_002,pro,canceled,true,99.0,2026-06-10T09:30:00Z
+cust_003,business,active,false,299.0,2026-06-10T10:00:00Z
+cust_004,business,canceled,true,299.0,2026-06-10T10:30:00Z
+cust_005,starter,active,false,29.0,2026-06-10T11:00:00Z

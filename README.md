@@ -38,6 +38,13 @@ dataproduct-kit export osi demo
 dataproduct-kit emit openlineage demo
 ```
 
+You can also validate with machine-readable output:
+
+```bash
+dataproduct-kit validate demo --format json
+dataproduct-kit validate demo --fail-on warn
+```
+
 Expected validation output:
 
 ```text
@@ -66,6 +73,13 @@ A data product directory contains four source-of-truth files:
 
 The bundled demo uses local CSV data and DuckDB, so it needs no cloud account or
 running database.
+
+Generate JSON Schema for editor integration or manifest authoring:
+
+```bash
+dataproduct-kit schema dataproduct
+dataproduct-kit schema all --out schemas
+```
 
 ## Validate
 
@@ -113,6 +127,13 @@ Exports are standards-aligned from the local profile:
 - OSI-inspired semantic model JSON.
 - OpenLineage-compatible validation event JSONL.
 
+Use `--out` to write standards exports to files:
+
+```bash
+dataproduct-kit export odcs demo --out contract.json
+dataproduct-kit export osi demo --out semantic.json
+```
+
 ## What this catches
 
 The validator returns `fail` for issues such as:
@@ -125,9 +146,20 @@ The validator returns `fail` for issues such as:
 - Metrics that reference unknown dimensions or invalid expressions.
 - Policy fields that reference columns not declared in the contract.
 
+Runnable examples live under `examples/`:
+
+- `examples/pass/saas-churn`
+- `examples/fail/schema-drift`
+- `examples/fail/stale-data`
+- `examples/fail/broken-metric`
+- `examples/fail/policy-gap`
+
+See [docs/usage-scenarios.md](docs/usage-scenarios.md) for concrete usage
+scenarios.
+
 ## Project status
 
-This is `v0.1-alpha`. The local CLI and SaaS churn demo are usable, but the
+This is `v0.2-alpha`. The local CLI and SaaS churn demo are usable, but the
 manifest profile and standards exports may change before a stable release.
 
 See [ROADMAP.md](ROADMAP.md) for planned standards depth, ecosystem adapters,
@@ -139,4 +171,5 @@ and agent/platform integrations.
 .venv/bin/python -m pytest
 .venv/bin/python -m ruff check .
 .venv/bin/python -m pip check
+./scripts/verify.sh
 ```

@@ -80,6 +80,19 @@ def test_compatibility_and_ci_rollout_docs_are_present() -> None:
     assert "products[*].trust_report.policy" in json_output
 
 
+def test_v1_docs_cover_profiles_from_csv_and_json_contract() -> None:
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    profiles = (ROOT / "docs/readiness-profiles.md").read_text(encoding="utf-8")
+    from_csv = (ROOT / "docs/from-csv.md").read_text(encoding="utf-8")
+    json_output = (ROOT / "docs/json-output.md").read_text(encoding="utf-8")
+
+    assert "open source CI gate for agent-safe data products" in readme
+    assert "dataproduct-kit init from-csv" in readme
+    assert "starter" in profiles and "production" in profiles and "regulated" in profiles
+    assert "TODO" in from_csv
+    assert "status" in json_output and "products" in json_output
+
+
 def test_ci_workflow_uses_node24_action_versions() -> None:
     workflow = (ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
 

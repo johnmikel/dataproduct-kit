@@ -14,6 +14,7 @@ Create `dataproduct-kit.toml` at the repository root:
 [ci]
 include = ["data-products/**"]
 exclude = ["data-products/sandbox/**"]
+profile = "production"
 fail_on = "warn"
 
 [[suppressions]]
@@ -24,8 +25,8 @@ expires = "2026-08-01"
 ```
 
 `include` and `exclude` use glob patterns against discovered product
-directories. `fail_on` becomes the default for `dataproduct-kit ci` when the
-command does not pass `--fail-on`.
+directories. `profile` and `fail_on` become the defaults for
+`dataproduct-kit ci` when the command does not pass `--profile` or `--fail-on`.
 
 ## Rules
 
@@ -36,6 +37,24 @@ command does not pass `--fail-on`.
 - Suppressed findings do not create GitHub annotations.
 - JSON and text output still include the suppressed finding.
 - SARIF output includes an external suppression with the reason and expiry.
+
+## Profile Findings
+
+Product-level profile findings use the same suppression mechanism as validation
+findings. For example, a team can temporarily suppress
+`profile.quality_checks_missing` while a producer adds checks:
+
+```toml
+[[suppressions]]
+code = "profile.quality_checks_missing"
+path = "data-products/growth/saas-churn"
+reason = "Quality checks are being migrated from the legacy pipeline."
+expires = "2026-08-01"
+```
+
+Use profile suppressions sparingly. In the `regulated` profile, any remaining
+unsuppressed warning creates `profile.unsuppressed_warning`, so expired or unused
+exceptions should be cleaned up before enabling that gate.
 
 ## Review Practice
 

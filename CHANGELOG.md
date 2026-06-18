@@ -9,6 +9,10 @@
 - Add suppression documentation and public issue templates.
 - Add Trusted Publishing setup docs and a v0.4.0 release checklist.
 - Add a manual TestPyPI-only publishing dry run.
+- Add readiness profiles for starter, production, and regulated adoption.
+- Add CSV onboarding for teams bringing their own local data.
+- Add a doctor command that explains production-readiness gaps.
+- Stabilize CI JSON output for v1 automation consumers.
 - Add config JSON Schema export, unused suppression warnings, source line
   metadata for CI annotations/SARIF, and production rollout docs.
 

@@ -7,9 +7,9 @@ product contracts, freshness, semantic definitions, and policy context.
 ## Local command
 
 ```bash
-dataproduct-kit ci . --format text --fail-on fail
-dataproduct-kit ci . --format json --fail-on warn
-dataproduct-kit ci . --format github --sarif dataproduct-kit.sarif.json
+dataproduct-kit ci . --profile starter --format text --fail-on fail
+dataproduct-kit ci . --profile production --format json --fail-on warn
+dataproduct-kit ci . --profile production --format github --sarif dataproduct-kit.sarif.json
 ```
 
 The command discovers directories that contain `dataproduct.yaml`, validates each
@@ -30,12 +30,14 @@ behavior consistent:
 [ci]
 include = ["data-products/**"]
 exclude = ["data-products/sandbox/**"]
+profile = "production"
 fail_on = "warn"
 ```
 
-When `--fail-on` is omitted, `dataproduct-kit ci` uses the config value. See
-[suppressions.md](suppressions.md) for temporary exception handling with expiry
-dates.
+When `--profile` or `--fail-on` is omitted, `dataproduct-kit ci` uses the config
+value. See [readiness-profiles.md](readiness-profiles.md) for profile behavior
+and [suppressions.md](suppressions.md) for temporary exception handling with
+expiry dates.
 
 ## Reusable GitHub Action
 
@@ -59,6 +61,7 @@ jobs:
       - uses: johnmikel/dataproduct-kit@v0.4.0
         with:
           path: "."
+          profile: "production"
           fail-on: "warn"
           format: "github"
           sarif: "dataproduct-kit.sarif.json"
@@ -69,8 +72,9 @@ jobs:
           sarif_file: "dataproduct-kit.sarif.json"
 ```
 
-The action installs `dataproduct-kit` from the checked-out action source, emits
-GitHub annotation commands for findings, and writes SARIF for audit evidence.
+The action installs `dataproduct-kit` from the checked-out action source, applies
+the selected readiness profile, emits GitHub annotation commands for findings,
+and writes SARIF for audit evidence.
 
 ## Recommended repository shape
 
@@ -92,13 +96,23 @@ data-products/
 Run:
 
 ```bash
-dataproduct-kit ci data-products --format github --fail-on warn
+dataproduct-kit ci data-products --profile production --format github --fail-on warn
 ```
+
+## Starter versus production
+
+Use `starter` when a team is importing a CSV or creating its first manifests. It
+keeps missing agent constraints, quality checks, and semantic metrics visible as
+warnings so the team can iterate locally.
+
+Use `production` in pull request gates. It turns those starter gaps into errors
+and also requires policy purposes, the `agent_context` purpose, and sensitive
+field coverage.
 
 ## When to block
 
 Use `--fail-on fail` when the team is adopting the tool for the first time and
-does not want optional metadata gaps to block delivery.
+does not want warnings to block delivery.
 
 Use `--fail-on warn` for mature repositories where missing freshness policies or
 other warning-level findings should be fixed before merge.

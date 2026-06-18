@@ -2,13 +2,9 @@
 
 [![CI](https://github.com/johnmikel/dataproduct-kit/actions/workflows/ci.yml/badge.svg)](https://github.com/johnmikel/dataproduct-kit/actions/workflows/ci.yml)
 
-`dataproduct-kit` is a CLI toolkit for validating agent-ready data products from
-local manifests and DuckDB-backed demo data.
-
-The v1 implementation focuses on one pragmatic slice: contracts, semantic metric
-definitions, quality checks, freshness, policy context, standards-aligned
-exports, OpenLineage-compatible events, and trust reports that humans and agents
-can both consume.
+`dataproduct-kit` is the open source CI gate for agent-safe data products.
+It validates contracts, quality checks, freshness, semantic metrics, policy
+constraints, and evidence outputs before AI agents consume data-product context.
 
 ## Why this exists
 
@@ -19,7 +15,29 @@ freshness context, lineage, and policy constraints.
 
 `dataproduct-kit` makes that trust context explicit and testable in a local repo.
 
-## Install locally
+## Quickstart
+
+```bash
+pipx install dataproduct-kit
+dataproduct-kit init demo --template saas-churn
+dataproduct-kit ci demo --profile starter
+dataproduct-kit report demo --format markdown
+dataproduct-kit context demo --metric churn_rate --format json
+```
+
+## Bring your own CSV
+
+```bash
+dataproduct-kit init from-csv data/customers.csv --out data-products/customers
+dataproduct-kit doctor data-products/customers
+dataproduct-kit ci data-products/customers --profile starter
+```
+
+The CSV scaffold creates starter manifests with inferred columns and TODO
+governance fields. See [docs/from-csv.md](docs/from-csv.md) for the graduation
+path from a local starter to a production gate.
+
+## Develop locally
 
 ```bash
 python3 -m venv .venv
@@ -30,7 +48,7 @@ python3 -m venv .venv
 
 ```bash
 dataproduct-kit init demo --template saas-churn
-dataproduct-kit validate demo
+dataproduct-kit ci demo --profile starter
 dataproduct-kit report demo --format markdown
 dataproduct-kit context demo --metric churn_rate --format json
 dataproduct-kit export odcs demo
@@ -92,13 +110,16 @@ The command exits with `0` for `pass` or `warn`, and `1` for `fail`.
 For repository-wide pull request checks, use the CI command:
 
 ```bash
-dataproduct-kit ci . --format text
-dataproduct-kit ci . --format github --fail-on warn --sarif dataproduct-kit.sarif.json
+dataproduct-kit ci . --profile production --format text
+dataproduct-kit ci . --profile production --format github --fail-on warn --sarif dataproduct-kit.sarif.json
 ```
 
 The CI command discovers every directory containing `dataproduct.yaml` below the
 path, validates each data product, emits a suite summary, and can write SARIF for
-audit evidence or code-scanning upload.
+audit evidence or code-scanning upload. Use `starter` for local onboarding and
+`production` for pull request gates; see
+[docs/readiness-profiles.md](docs/readiness-profiles.md) for the full profile
+behavior.
 
 Repository defaults can live in `dataproduct-kit.toml`:
 
@@ -106,6 +127,7 @@ Repository defaults can live in `dataproduct-kit.toml`:
 [ci]
 include = ["data-products/**"]
 exclude = ["data-products/sandbox/**"]
+profile = "production"
 fail_on = "warn"
 ```
 
@@ -115,6 +137,7 @@ You can also use the bundled GitHub Action:
 - uses: johnmikel/dataproduct-kit@v0.4.0
   with:
     path: "."
+    profile: "production"
     fail-on: "warn"
     format: "github"
     sarif: "dataproduct-kit.sarif.json"
@@ -187,12 +210,14 @@ Runnable examples live under `examples/`:
 
 See [docs/usage-scenarios.md](docs/usage-scenarios.md) for concrete usage
 scenarios. See [docs/ci-adoption.md](docs/ci-adoption.md) for pull request gate
-setup, [docs/finding-codes.md](docs/finding-codes.md) for stable finding
-codes, and [docs/suppressions.md](docs/suppressions.md) for expiring
-exceptions. See [docs/compatibility.md](docs/compatibility.md) for supported
-automation surfaces and [docs/ci-rollout.md](docs/ci-rollout.md) for a staged
-production rollout. Maintainer release notes live in
-[docs/publishing.md](docs/publishing.md) and
+setup, [docs/readiness-profiles.md](docs/readiness-profiles.md) for profile
+behavior, [docs/from-csv.md](docs/from-csv.md) for CSV onboarding,
+[docs/json-output.md](docs/json-output.md) for the stable automation contract,
+[docs/finding-codes.md](docs/finding-codes.md) for stable finding codes, and
+[docs/suppressions.md](docs/suppressions.md) for expiring exceptions. See
+[docs/compatibility.md](docs/compatibility.md) for supported automation surfaces
+and [docs/ci-rollout.md](docs/ci-rollout.md) for a staged production rollout.
+Maintainer release notes live in [docs/publishing.md](docs/publishing.md) and
 [docs/release-checklist.md](docs/release-checklist.md).
 
 ## Project status

@@ -109,6 +109,23 @@ def test_cli_validate_fail_on_warn_returns_nonzero_for_warning_project(tmp_path:
     assert "freshness.missing" in strict_result.output
 
 
+def test_cli_context_requires_agent_context_purpose(tmp_path: Path) -> None:
+    from dataproduct_kit.cli import app
+
+    runner = CliRunner()
+    write_valid_project(tmp_path)
+    policy_path = tmp_path / "policy.yaml"
+    policy_path.write_text(
+        policy_path.read_text(encoding="utf-8").replace("  - agent_context\n", ""),
+        encoding="utf-8",
+    )
+
+    result = runner.invoke(app, ["context", str(tmp_path), "--metric", "churn_rate"])
+
+    assert result.exit_code == 1
+    assert "agent_context" in result.output
+
+
 def test_cli_schema_prints_single_schema_and_writes_all(tmp_path: Path) -> None:
     from dataproduct_kit.cli import app
 

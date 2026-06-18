@@ -16,6 +16,8 @@
 - Add readiness profile rules for agent constraints, semantic metrics, quality
   checks, sensitive-field policy coverage, regulated classifications, and
   regulated warning blocking.
+- Enforce agent context policy so context bundles require the `agent_context`
+  purpose and reject sensitive metric dimensions.
 
 ## v0.3.0 - 2026-06-17
 

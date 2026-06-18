@@ -597,7 +597,7 @@ git commit -m "feat: apply readiness profile rules"
 - Modify: `tests/test_reports_and_standards.py`
 - Create/modify: `tests/test_context.py`
 
-- [ ] **Step 1: Write failing tests for denied agent context purpose**
+- [x] **Step 1: Write failing tests for denied agent context purpose**
 
 Create `tests/test_context.py`:
 
@@ -628,7 +628,7 @@ def test_agent_context_requires_agent_context_purpose(tmp_path: Path) -> None:
         build_agent_context(project, validate_project(project), "churn_rate")
 ```
 
-- [ ] **Step 2: Write failing test for sensitive dimension exclusion**
+- [x] **Step 2: Write failing test for sensitive dimension exclusion**
 
 Add:
 
@@ -656,7 +656,7 @@ def test_agent_context_rejects_sensitive_dimensions(tmp_path: Path) -> None:
         build_agent_context(project, validate_project(project), "churn_rate")
 ```
 
-- [ ] **Step 3: Run tests and verify they fail**
+- [x] **Step 3: Run tests and verify they fail**
 
 Run:
 
@@ -666,7 +666,7 @@ Run:
 
 Expected: fail because context currently emits context without policy checks.
 
-- [ ] **Step 4: Implement context policy checks**
+- [x] **Step 4: Implement context policy checks**
 
 Modify `src/dataproduct_kit/context.py`:
 
@@ -690,12 +690,12 @@ def build_agent_context(...):
 
 Keep output free of row-level values. Do not evaluate SQL expressions.
 
-- [ ] **Step 5: Add CLI context error regression**
+- [x] **Step 5: Add CLI context error regression**
 
 Extend `tests/test_cli.py` with a runner test that removes `agent_context` from
 `policy.yaml`, calls `context`, and asserts exit code `1` plus a clear message.
 
-- [ ] **Step 6: Run context and CLI tests**
+- [x] **Step 6: Run context and CLI tests**
 
 Run:
 
@@ -705,7 +705,7 @@ Run:
 
 Expected: pass.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/dataproduct_kit/context.py tests/test_context.py tests/test_cli.py tests/test_reports_and_standards.py

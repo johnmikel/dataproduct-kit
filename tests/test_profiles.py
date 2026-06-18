@@ -79,3 +79,106 @@ def test_regulated_blocks_unsuppressed_warnings(tmp_path: Path) -> None:
 
     assert suite.status == "fail"
     assert any(finding.code == "profile.unsuppressed_warning" for finding in suite.findings)
+
+
+def test_agent_constraints_profile_finding_maps_to_policy_yaml(tmp_path: Path) -> None:
+    from dataproduct_kit.ci import render_github_annotations
+    from dataproduct_kit.suite import validate_suite
+
+    project_dir = tmp_path / "products/customers"
+    write_valid_project(project_dir)
+    policy = (project_dir / "policy.yaml").read_text(encoding="utf-8")
+    (project_dir / "policy.yaml").write_text(
+        policy.replace(
+            "agent_constraints:\n"
+            "  - Agents may use the approved churn_rate metric only.\n"
+            "  - Agents must include freshness and quality status with answers.\n",
+            "agent_constraints: []\n",
+        ),
+        encoding="utf-8",
+    )
+
+    suite = validate_suite(tmp_path, profile_override="starter")
+
+    finding = _finding(suite.products[0].findings, "profile.agent_constraints_missing")
+    assert finding.line is not None
+    assert "::warning file=products/customers/policy.yaml,line=" in render_github_annotations(suite)
+
+
+def test_quality_checks_profile_finding_maps_to_contract_yaml(tmp_path: Path) -> None:
+    from dataproduct_kit.ci import render_github_annotations
+    from dataproduct_kit.suite import validate_suite
+
+    project_dir = tmp_path / "products/customers"
+    write_valid_project(project_dir)
+    contract = (project_dir / "contract.yaml").read_text(encoding="utf-8")
+    (project_dir / "contract.yaml").write_text(
+        contract.replace(
+            "quality_checks:\n"
+            "  - name: customer_id_not_null\n"
+            "    type: not_null\n"
+            "    column: customer_id\n"
+            "  - name: customer_id_unique\n"
+            "    type: unique\n"
+            "    column: customer_id\n"
+            "  - name: status_values\n"
+            "    type: accepted_values\n"
+            "    column: status\n"
+            "    values: [\"active\", \"canceled\"]\n"
+            "  - name: positive_mrr\n"
+            "    type: min\n"
+            "    column: monthly_recurring_revenue\n"
+            "    value: 0\n"
+            "  - name: enough_rows\n"
+            "    type: row_count_min\n"
+            "    value: 5\n",
+            "quality_checks: []\n",
+        ),
+        encoding="utf-8",
+    )
+
+    suite = validate_suite(tmp_path, profile_override="starter")
+
+    finding = _finding(suite.products[0].findings, "profile.quality_checks_missing")
+    assert finding.line is not None
+    assert (
+        "::warning file=products/customers/contract.yaml,line="
+        in render_github_annotations(suite)
+    )
+
+
+def test_semantic_metrics_profile_finding_maps_to_semantic_yaml(tmp_path: Path) -> None:
+    from dataproduct_kit.ci import render_github_annotations
+    from dataproduct_kit.suite import validate_suite
+
+    project_dir = tmp_path / "products/customers"
+    write_valid_project(project_dir)
+    semantic = (project_dir / "semantic.yaml").read_text(encoding="utf-8")
+    (project_dir / "semantic.yaml").write_text(
+        semantic.replace(
+            "metrics:\n"
+            "  - name: churn_rate\n"
+            "    label: Churn Rate\n"
+            "    description: Share of subscriptions that churned during the reporting grain.\n"
+            "    dataset: subscriptions\n"
+            '    expression: "sum(case when churned then 1 else 0 end)::double / '
+            'nullif(count(*), 0)"\n'
+            "    grain: month\n"
+            "    dimensions: [plan]\n",
+            "metrics: []\n",
+        ),
+        encoding="utf-8",
+    )
+
+    suite = validate_suite(tmp_path, profile_override="starter")
+
+    finding = _finding(suite.products[0].findings, "profile.semantic_metrics_missing")
+    assert finding.line is not None
+    assert (
+        "::warning file=products/customers/semantic.yaml,line="
+        in render_github_annotations(suite)
+    )
+
+
+def _finding(findings, code: str):
+    return next(finding for finding in findings if finding.code == code)

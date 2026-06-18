@@ -8,8 +8,21 @@ from dataproduct_kit.models import Finding
 
 _QUOTED_TOKEN = re.compile(r"'([^']+)'")
 
+_PROFILE_MANIFEST_BY_CODE = {
+    "profile.agent_constraints_missing": "policy.yaml",
+    "profile.allowed_purposes_missing": "policy.yaml",
+    "profile.agent_purpose_missing": "policy.yaml",
+    "profile.sensitive_fields_missing": "policy.yaml",
+    "profile.quality_checks_missing": "contract.yaml",
+    "profile.classification_missing": "contract.yaml",
+    "profile.semantic_metrics_missing": "semantic.yaml",
+    "profile.unsuppressed_warning": CONFIG_FILENAME,
+}
+
 
 def manifest_for_code(code: str) -> str:
+    if code in _PROFILE_MANIFEST_BY_CODE:
+        return _PROFILE_MANIFEST_BY_CODE[code]
     prefix = code.split(".", 1)[0]
     if prefix in {"config", "suppression"}:
         return CONFIG_FILENAME

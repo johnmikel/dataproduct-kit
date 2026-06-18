@@ -15,7 +15,7 @@ def scaffold_from_csv(csv_path: Path, out: Path) -> None:
     if not csv_path.exists():
         raise ValueError(f"CSV file not found: {csv_path}")
     columns, rows = _sample_rows(csv_path)
-    if not columns:
+    if not _has_header(columns):
         raise ValueError(f"CSV file has no header row: {csv_path}")
     dataset_id = _safe_name(csv_path.stem)
     out.mkdir(parents=True, exist_ok=True)
@@ -105,6 +105,22 @@ def _infer_type(values: list[str | None]) -> str:
     if all(_is_timestamp(value) for value in populated):
         return "timestamp"
     return "string"
+
+
+def _has_header(columns: list[str]) -> bool:
+    normalized = [column.strip() for column in columns]
+    if not normalized or any(not column for column in normalized):
+        return False
+    return not all(_is_primitive_value(column) for column in normalized)
+
+
+def _is_primitive_value(value: str) -> bool:
+    return (
+        _is_boolean(value)
+        or _is_integer(value)
+        or _is_number(value)
+        or _is_timestamp(value)
+    )
 
 
 def _safe_name(value: str) -> str:

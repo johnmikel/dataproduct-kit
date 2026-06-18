@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
 from conftest import write_text, write_valid_project
 from typer.testing import CliRunner
 
@@ -29,6 +30,41 @@ def test_ci_config_filters_discovered_products(tmp_path: Path) -> None:
     assert suite.summary["products_total"] == 1
     assert [product.path for product in suite.products] == ["data-products/include-me"]
     assert suite.config["fail_on"] == "warn"
+
+
+def test_ci_config_accepts_profile(tmp_path: Path) -> None:
+    from dataproduct_kit.config import load_config
+
+    write_text(
+        tmp_path / "dataproduct-kit.toml",
+        """
+        [ci]
+        profile = "production"
+        fail_on = "warn"
+        """,
+    )
+
+    config = load_config(tmp_path)
+
+    assert config.ci.profile == "production"
+    assert config.ci.fail_on == "warn"
+
+
+def test_ci_config_rejects_unknown_profile(tmp_path: Path) -> None:
+    from dataproduct_kit.config import ConfigLoadError, load_config
+
+    write_text(
+        tmp_path / "dataproduct-kit.toml",
+        """
+        [ci]
+        profile = "anything"
+        """,
+    )
+
+    with pytest.raises(ConfigLoadError) as error:
+        load_config(tmp_path)
+
+    assert "ci.profile" in str(error.value)
 
 
 def test_active_suppression_marks_finding_and_changes_effective_status(tmp_path: Path) -> None:

@@ -23,6 +23,7 @@ The stable config surface is `dataproduct-kit.toml`:
 - `[ci].include`
 - `[ci].exclude`
 - `[ci].fail_on`
+- `[ci].profile`
 - `[[suppressions]].code`
 - `[[suppressions]].path`
 - `[[suppressions]].reason`

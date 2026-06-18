@@ -11,6 +11,8 @@
 - Add a manual TestPyPI-only publishing dry run.
 - Add config JSON Schema export, unused suppression warnings, source line
   metadata for CI annotations/SARIF, and production rollout docs.
+- Add readiness profile plumbing for repo config, CI JSON output, CLI overrides,
+  generated config schema, and the GitHub Action.
 
 ## v0.3.0 - 2026-06-17
 

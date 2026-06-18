@@ -10,6 +10,10 @@ inputs:
     description: Exit nonzero when the suite reaches this status.
     required: false
     default: "fail"
+  profile:
+    description: Readiness profile to apply.
+    required: false
+    default: "starter"
   format:
     description: Output format for validation results.
     required: false
@@ -42,5 +46,6 @@ runs:
       run: |
         dataproduct-kit ci "${{ inputs.path }}" \
           --format "${{ inputs.format }}" \
+          --profile "${{ inputs.profile }}" \
           --fail-on "${{ inputs.fail-on }}" \
           --sarif "${{ inputs.sarif }}"

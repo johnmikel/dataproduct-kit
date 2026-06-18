@@ -79,7 +79,7 @@ Modify:
 - Modify: `tests/test_config.py`
 - Modify: `tests/test_ci.py`
 
-- [ ] **Step 1: Write failing tests for config profile parsing**
+- [x] **Step 1: Write failing tests for config profile parsing**
 
 Add to `tests/test_config.py`:
 
@@ -115,7 +115,7 @@ def test_config_rejects_unknown_ci_profile(tmp_path: Path) -> None:
     assert "ci.profile" in str(error.value)
 ```
 
-- [ ] **Step 2: Write failing tests for CLI profile override**
+- [x] **Step 2: Write failing tests for CLI profile override**
 
 Add to `tests/test_ci.py`:
 
@@ -137,7 +137,7 @@ def test_cli_ci_accepts_profile_override(tmp_path: Path) -> None:
     assert payload["config"]["profile"] == "production"
 ```
 
-- [ ] **Step 3: Run tests and verify they fail**
+- [x] **Step 3: Run tests and verify they fail**
 
 Run:
 
@@ -147,7 +147,7 @@ Run:
 
 Expected: fail because `profile` is not modeled and `ci --profile` does not exist.
 
-- [ ] **Step 4: Implement profile type and config field**
+- [x] **Step 4: Implement profile type and config field**
 
 Create `src/dataproduct_kit/profiles.py`:
 
@@ -175,7 +175,7 @@ class CiConfig(StrictModel):
     profile: ReadinessProfile = DEFAULT_PROFILE
 ```
 
-- [ ] **Step 5: Add profile metadata to suite report**
+- [x] **Step 5: Add profile metadata to suite report**
 
 Modify `src/dataproduct_kit/models.py`:
 
@@ -205,7 +205,7 @@ def _config_summary(config: KitConfig) -> dict:
     }
 ```
 
-- [ ] **Step 6: Add CLI profile option**
+- [x] **Step 6: Add CLI profile option**
 
 Modify `src/dataproduct_kit/cli.py` `ci(...)` signature:
 
@@ -239,7 +239,7 @@ if profile_override is not None:
     )
 ```
 
-- [ ] **Step 7: Run profile plumbing tests**
+- [x] **Step 7: Run profile plumbing tests**
 
 Run:
 
@@ -249,7 +249,7 @@ Run:
 
 Expected: pass.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add src/dataproduct_kit/profiles.py src/dataproduct_kit/config.py src/dataproduct_kit/models.py src/dataproduct_kit/suite.py src/dataproduct_kit/cli.py tests/test_config.py tests/test_ci.py

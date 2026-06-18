@@ -102,6 +102,7 @@ def test_cli_ci_outputs_json_github_annotations_and_sarif(tmp_path: Path) -> Non
     assert json_result.exit_code == 1
     payload = json.loads(json_result.output)
     assert payload["status"] == "fail"
+    assert payload["profile"] == "starter"
     assert payload["products"][0]["path"] == "products/fail"
 
     sarif_path = tmp_path / "dataproduct-kit.sarif.json"
@@ -158,16 +159,39 @@ def test_cli_ci_fail_on_warn_exits_nonzero_for_warning_suite(tmp_path: Path) -> 
     assert "freshness.missing" in strict_result.output
 
 
+def test_cli_ci_accepts_profile_override(tmp_path: Path) -> None:
+    from dataproduct_kit.cli import app
+
+    runner = CliRunner()
+    write_valid_project(tmp_path / "products/pass")
+    (tmp_path / "dataproduct-kit.toml").write_text(
+        "[ci]\nprofile = \"starter\"\n",
+        encoding="utf-8",
+    )
+
+    result = runner.invoke(
+        app,
+        ["ci", str(tmp_path), "--profile", "production", "--format", "json"],
+    )
+
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.output)
+    assert payload["profile"] == "production"
+    assert payload["config"]["profile"] == "production"
+
+
 def test_action_metadata_runs_ci_command() -> None:
     action = yaml.safe_load(Path("action.yml").read_text(encoding="utf-8"))
 
     assert action["runs"]["using"] == "composite"
     assert action["inputs"]["path"]["default"] == "."
     assert action["inputs"]["fail-on"]["default"] == "fail"
+    assert action["inputs"]["profile"]["default"] == "starter"
     assert any(step.get("uses") == "actions/setup-python@v6" for step in action["runs"]["steps"])
     commands = "\n".join(step.get("run", "") for step in action["runs"]["steps"])
     assert 'python -m pip install "${{ github.action_path }}"' in commands
     assert 'dataproduct-kit ci "${{ inputs.path }}"' in commands
+    assert '--profile "${{ inputs.profile }}"' in commands
     assert '--format "${{ inputs.format }}"' in commands
     assert '--sarif "${{ inputs.sarif }}"' in commands
 

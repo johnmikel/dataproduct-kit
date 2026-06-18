@@ -14,6 +14,7 @@ small product set.
   with:
     path: "data-products"
     fail-on: "fail"
+    profile: "starter"
     format: "github"
     sarif: "dataproduct-kit.sarif.json"
 ```
@@ -32,6 +33,7 @@ allowing warnings to remain visible.
 include = ["data-products/**"]
 exclude = ["data-products/sandbox/**"]
 fail_on = "fail"
+profile = "production"
 ```
 
 Use suppressions only for time-bound exceptions with clear owners and expiry
@@ -45,6 +47,7 @@ not optional advice.
 ```toml
 [ci]
 fail_on = "warn"
+profile = "production"
 ```
 
 This makes missing freshness policies and unused suppressions block merges until

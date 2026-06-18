@@ -8,7 +8,7 @@ product contracts, freshness, semantic definitions, and policy context.
 
 ```bash
 dataproduct-kit ci . --format text --fail-on fail
-dataproduct-kit ci . --format json --fail-on warn
+dataproduct-kit ci . --format json --fail-on warn --profile production
 dataproduct-kit ci . --format github --sarif dataproduct-kit.sarif.json
 ```
 
@@ -31,11 +31,12 @@ behavior consistent:
 include = ["data-products/**"]
 exclude = ["data-products/sandbox/**"]
 fail_on = "warn"
+profile = "production"
 ```
 
-When `--fail-on` is omitted, `dataproduct-kit ci` uses the config value. See
-[suppressions.md](suppressions.md) for temporary exception handling with expiry
-dates.
+When `--fail-on` or `--profile` is omitted, `dataproduct-kit ci` uses the config
+value. See [suppressions.md](suppressions.md) for temporary exception handling
+with expiry dates.
 
 ## Reusable GitHub Action
 
@@ -60,6 +61,7 @@ jobs:
         with:
           path: "."
           fail-on: "warn"
+          profile: "production"
           format: "github"
           sarif: "dataproduct-kit.sarif.json"
 

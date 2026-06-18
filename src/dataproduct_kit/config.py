@@ -8,6 +8,7 @@ from typing import Literal
 from pydantic import Field, ValidationError, field_validator
 
 from dataproduct_kit.models import StrictModel
+from dataproduct_kit.profiles import DEFAULT_PROFILE, ReadinessProfile
 
 CONFIG_FILENAME = "dataproduct-kit.toml"
 
@@ -20,6 +21,7 @@ class CiConfig(StrictModel):
     include: list[str] = Field(default_factory=lambda: ["**"])
     exclude: list[str] = Field(default_factory=list)
     fail_on: Literal["fail", "warn"] = "fail"
+    profile: ReadinessProfile = DEFAULT_PROFILE
 
 
 class SuppressionConfig(StrictModel):

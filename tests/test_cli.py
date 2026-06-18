@@ -126,6 +126,9 @@ def test_cli_schema_prints_single_schema_and_writes_all(tmp_path: Path) -> None:
     assert config_schema["title"] == "KitConfig"
     assert "ci" in config_schema["properties"]
     assert "suppressions" in config_schema["properties"]
+    profile_schema = config_schema["$defs"]["CiConfig"]["properties"]["profile"]
+    assert profile_schema["default"] == "starter"
+    assert profile_schema["enum"] == ["starter", "production", "regulated"]
 
     out_dir = tmp_path / "schemas"
     all_result = runner.invoke(app, ["schema", "all", "--out", str(out_dir)])

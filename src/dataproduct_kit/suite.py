@@ -75,7 +75,13 @@ def validate_suite(root: Path, profile_override: str | None = None) -> Validatio
             root,
             _unused_suppression_findings(config, matched_suppressions=set()),
         )
-        findings = [*config_findings, *unused_findings, finding]
+        findings = _with_regulated_warning_blocker(
+            root,
+            config.ci.profile,
+            products=[],
+            config_findings=[*config_findings, *unused_findings],
+        )
+        findings = [*findings, finding]
         return ValidationSuiteReport(
             status="fail",
             summary={
@@ -102,21 +108,12 @@ def validate_suite(root: Path, profile_override: str | None = None) -> Validatio
         _unused_suppression_findings(config, matched_suppressions),
     )
     config_findings = [*config_findings, *unused_findings]
-    if config.ci.profile == "regulated":
-        unsuppressed_warnings = _unsuppressed_regulated_warnings(products, config_findings)
-        if unsuppressed_warnings:
-            config_findings.extend(
-                with_config_source_lines(
-                    root,
-                    [
-                        Finding(
-                            level="error",
-                            code="profile.unsuppressed_warning",
-                            message="regulated profile does not allow unsuppressed warnings",
-                        )
-                    ],
-                )
-            )
+    config_findings = _with_regulated_warning_blocker(
+        root,
+        config.ci.profile,
+        products,
+        config_findings,
+    )
     products_passed = sum(1 for product in products if product.status == "pass")
     products_warned = sum(1 for product in products if product.status == "warn")
     products_failed = sum(1 for product in products if product.status == "fail")
@@ -148,6 +145,32 @@ def validate_suite(root: Path, profile_override: str | None = None) -> Validatio
         findings=config_findings,
         products=products,
     )
+
+
+def _with_regulated_warning_blocker(
+    root: Path,
+    profile: ReadinessProfile,
+    products: list[SuiteProductReport],
+    config_findings: list[Finding],
+) -> list[Finding]:
+    if profile != "regulated":
+        return config_findings
+    if any(finding.code == "profile.unsuppressed_warning" for finding in config_findings):
+        return config_findings
+    unsuppressed_warnings = _unsuppressed_regulated_warnings(products, config_findings)
+    if not unsuppressed_warnings:
+        return config_findings
+    blocker = with_config_source_lines(
+        root,
+        [
+            Finding(
+                level="error",
+                code="profile.unsuppressed_warning",
+                message="regulated profile does not allow unsuppressed warnings",
+            )
+        ],
+    )
+    return [*config_findings, *blocker]
 
 
 def _unsuppressed_regulated_warnings(

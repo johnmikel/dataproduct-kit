@@ -107,6 +107,30 @@ def test_regulated_blocks_unused_suppression_warning(tmp_path: Path) -> None:
     assert blocker.line is not None
 
 
+def test_regulated_blocks_unused_suppression_warning_without_products(
+    tmp_path: Path,
+) -> None:
+    from dataproduct_kit.suite import validate_suite
+
+    write_text(
+        tmp_path / "dataproduct-kit.toml",
+        """
+        [[suppressions]]
+        code = "schema.missing_column"
+        path = "products/pass"
+        reason = "This migration has already landed and the suppression should be removed."
+        expires = "2999-01-01"
+        """,
+    )
+
+    suite = validate_suite(tmp_path, profile_override="regulated")
+
+    assert suite.status == "fail"
+    assert _finding(suite.findings, "discovery.no_products").level == "error"
+    assert _finding(suite.findings, "suppression.unused").level == "warning"
+    assert _finding(suite.findings, "profile.unsuppressed_warning").level == "error"
+
+
 def test_agent_constraints_profile_finding_maps_to_policy_yaml(tmp_path: Path) -> None:
     from dataproduct_kit.ci import render_github_annotations
     from dataproduct_kit.suite import validate_suite

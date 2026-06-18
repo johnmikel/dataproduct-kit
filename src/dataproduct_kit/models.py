@@ -5,6 +5,8 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
+from dataproduct_kit.profiles import DEFAULT_PROFILE, ReadinessProfile
+
 
 class StrictModel(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -176,7 +178,7 @@ class SuiteProductReport(BaseModel):
 class ValidationSuiteReport(BaseModel):
     status: Literal["pass", "warn", "fail"]
     summary: dict[str, int]
-    profile: str = "starter"
+    profile: ReadinessProfile = DEFAULT_PROFILE
     config: dict[str, Any] = Field(default_factory=dict)
     findings: list[Finding] = Field(default_factory=list)
     products: list[SuiteProductReport] = Field(default_factory=list)

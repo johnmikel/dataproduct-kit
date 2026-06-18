@@ -4,7 +4,13 @@ from datetime import date
 from fnmatch import fnmatchcase
 from pathlib import Path
 
-from dataproduct_kit.config import ConfigLoadError, KitConfig, SuppressionConfig, load_config
+from dataproduct_kit.config import (
+    ConfigLoadError,
+    KitConfig,
+    SuppressionConfig,
+    apply_profile_override,
+    load_config,
+)
 from dataproduct_kit.finding_codes import KNOWN_FINDING_CODES
 from dataproduct_kit.loader import ManifestLoadError, load_project
 from dataproduct_kit.models import Finding, SuiteProductReport, ValidationSuiteReport
@@ -28,14 +34,13 @@ def discover_project_dirs(root: Path, config: KitConfig | None = None) -> list[P
     return sorted(filtered, key=lambda path: _relative_path(path, root))
 
 
-def validate_suite(
-    root: Path,
-    profile_override: ReadinessProfile | None = None,
-) -> ValidationSuiteReport:
+def validate_suite(root: Path, profile_override: str | None = None) -> ValidationSuiteReport:
     """Validate every data product discovered below root."""
     root = root.resolve()
     try:
         config = load_config(root)
+        if profile_override is not None:
+            config = apply_profile_override(config, profile_override)
     except ConfigLoadError as error:
         finding = Finding(level="error", code="config.invalid", message=str(error))
         return ValidationSuiteReport(
@@ -48,21 +53,15 @@ def validate_suite(
                 "findings_total": 1,
                 "findings_suppressed": 0,
             },
-            profile=profile_override or DEFAULT_PROFILE,
+            profile=DEFAULT_PROFILE,
             config={
                 "fail_on": "fail",
                 "include": ["**"],
                 "exclude": [],
-                "profile": profile_override or DEFAULT_PROFILE,
+                "profile": DEFAULT_PROFILE,
             },
             findings=[finding],
             products=[],
-        )
-    if profile_override is not None:
-        config = config.model_copy(
-            update={
-                "ci": config.ci.model_copy(update={"profile": profile_override}),
-            }
         )
     config_findings = with_config_source_lines(root, _validate_suppressions(config))
     product_dirs = discover_project_dirs(root, config)
@@ -76,7 +75,13 @@ def validate_suite(
             root,
             _unused_suppression_findings(config, matched_suppressions=set()),
         )
-        findings = [*config_findings, *unused_findings, finding]
+        findings = _with_regulated_warning_blocker(
+            root,
+            config.ci.profile,
+            products=[],
+            config_findings=[*config_findings, *unused_findings],
+        )
+        findings = [*findings, finding]
         return ValidationSuiteReport(
             status="fail",
             summary={
@@ -103,14 +108,12 @@ def validate_suite(
         _unused_suppression_findings(config, matched_suppressions),
     )
     config_findings = [*config_findings, *unused_findings]
-    if config.ci.profile == "regulated":
-        config_findings = [
-            *config_findings,
-            *with_config_source_lines(
-                root,
-                _regulated_suite_findings(products, config_findings),
-            ),
-        ]
+    config_findings = _with_regulated_warning_blocker(
+        root,
+        config.ci.profile,
+        products,
+        config_findings,
+    )
     products_passed = sum(1 for product in products if product.status == "pass")
     products_warned = sum(1 for product in products if product.status == "warn")
     products_failed = sum(1 for product in products if product.status == "fail")
@@ -144,6 +147,54 @@ def validate_suite(
     )
 
 
+def _with_regulated_warning_blocker(
+    root: Path,
+    profile: ReadinessProfile,
+    products: list[SuiteProductReport],
+    config_findings: list[Finding],
+) -> list[Finding]:
+    if profile != "regulated":
+        return config_findings
+    if any(finding.code == "profile.unsuppressed_warning" for finding in config_findings):
+        return config_findings
+    unsuppressed_warnings = _unsuppressed_regulated_warnings(products, config_findings)
+    if not unsuppressed_warnings:
+        return config_findings
+    blocker = with_config_source_lines(
+        root,
+        [
+            Finding(
+                level="error",
+                code="profile.unsuppressed_warning",
+                message="regulated profile does not allow unsuppressed warnings",
+            )
+        ],
+    )
+    return [*config_findings, *blocker]
+
+
+def _unsuppressed_regulated_warnings(
+    products: list[SuiteProductReport],
+    config_findings: list[Finding],
+) -> list[Finding]:
+    warnings = [
+        finding for finding in config_findings if _is_regulated_blocking_warning(finding)
+    ]
+    warnings.extend(
+        finding
+        for product in products
+        for finding in product.findings
+        if _is_regulated_blocking_warning(finding)
+    )
+    return warnings
+
+
+def _is_regulated_blocking_warning(finding: Finding) -> bool:
+    if finding.code == "profile.unsuppressed_warning":
+        return False
+    return finding.level == "warning" and not finding.suppressed
+
+
 def _validate_product(
     root: Path,
     product_dir: Path,
@@ -169,23 +220,17 @@ def _validate_product(
             findings=with_product_source_lines(root, product_path, [finding]),
         )
     report = validate_project(project)
-    findings = with_product_source_lines(
-        root,
-        product_path,
-        [*report.findings, *profile_findings(project, report, profile)],
-    )
+    profile_findings_list = profile_findings(project, report, profile)
+    findings = [*report.findings, *profile_findings_list]
     errors = [finding for finding in findings if finding.level == "error"]
     warnings = [finding for finding in findings if finding.level == "warning"]
     status = "fail" if errors else "warn" if warnings else "pass"
     summary = dict(report.summary)
     summary["checks_failed"] = len(errors)
     summary["checks_warned"] = len(warnings)
+    findings = with_product_source_lines(root, product_path, findings)
     report = report.model_copy(
-        update={
-            "status": status,
-            "summary": summary,
-            "findings": findings,
-        }
+        update={"status": status, "findings": findings, "summary": summary}
     )
     return SuiteProductReport(
         path=product_path,
@@ -274,29 +319,6 @@ def _unused_suppression_findings(
             )
         )
     return findings
-
-
-def _regulated_suite_findings(
-    products: list[SuiteProductReport],
-    config_findings: list[Finding],
-) -> list[Finding]:
-    product_warning = any(
-        finding.level == "warning" and not finding.suppressed
-        for product in products
-        for finding in product.findings
-    )
-    config_warning = any(
-        finding.level == "warning" and not finding.suppressed for finding in config_findings
-    )
-    if not product_warning and not config_warning:
-        return []
-    return [
-        Finding(
-            level="error",
-            code="profile.unsuppressed_warning",
-            message="regulated profile does not allow unsuppressed warnings",
-        )
-    ]
 
 
 def _validate_suppressions(config: KitConfig) -> list[Finding]:

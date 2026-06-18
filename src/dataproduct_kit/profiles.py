@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
-from dataproduct_kit.models import DataProductProject, Finding, TrustReport
+if TYPE_CHECKING:
+    from dataproduct_kit.models import DataProductProject, Finding, TrustReport
 
 ReadinessProfile = Literal["starter", "production", "regulated"]
 
@@ -12,11 +13,13 @@ PROFILE_NAMES: tuple[ReadinessProfile, ...] = ("starter", "production", "regulat
 SENSITIVE_CLASSIFICATIONS = {
     "confidential",
     "restricted",
-    "secret",
     "sensitive",
-    "highly_sensitive",
     "pii",
+    "personal",
+    "personally_identifying",
 }
+
+PLACEHOLDER_CLASSIFICATIONS = {"todo", "unknown"}
 
 
 def profile_findings(
@@ -24,17 +27,22 @@ def profile_findings(
     report: TrustReport,
     profile: ReadinessProfile,
 ) -> list[Finding]:
-    """Return governance findings required by the selected readiness profile."""
-    findings = _starter_findings(project, profile)
+    findings: list[Finding] = []
+    findings.extend(_starter_findings(project, report, profile))
     if profile in {"production", "regulated"}:
-        findings.extend(_production_findings(project, profile))
+        findings.extend(_production_findings(project, report))
     if profile == "regulated":
-        findings.extend(_regulated_findings(project))
-    existing_codes = {finding.code for finding in report.findings}
-    return _without_duplicates(findings, existing_codes=existing_codes)
+        findings.extend(_regulated_findings(project, report))
+    return findings
 
 
-def _starter_findings(project: DataProductProject, profile: ReadinessProfile) -> list[Finding]:
+def _starter_findings(
+    project: DataProductProject,
+    report: TrustReport,
+    profile: ReadinessProfile,
+) -> list[Finding]:
+    from dataproduct_kit.models import Finding
+
     level = "error" if profile in {"production", "regulated"} else "warning"
     findings: list[Finding] = []
     if not project.policy.agent_constraints:
@@ -42,10 +50,7 @@ def _starter_findings(project: DataProductProject, profile: ReadinessProfile) ->
             Finding(
                 level=level,
                 code="profile.agent_constraints_missing",
-                message=(
-                    f"{profile} profile requires policy agent_constraints so agents have "
-                    "explicit usage boundaries"
-                ),
+                message="policy.yaml must declare agent_constraints for agent-safe use",
             )
         )
     if not project.contract.quality_checks:
@@ -53,7 +58,7 @@ def _starter_findings(project: DataProductProject, profile: ReadinessProfile) ->
             Finding(
                 level=level,
                 code="profile.quality_checks_missing",
-                message=f"{profile} profile requires at least one contract quality check",
+                message="contract.yaml should declare quality checks",
             )
         )
     if not project.semantic.metrics:
@@ -61,23 +66,22 @@ def _starter_findings(project: DataProductProject, profile: ReadinessProfile) ->
             Finding(
                 level=level,
                 code="profile.semantic_metrics_missing",
-                message=f"{profile} profile requires at least one semantic metric",
+                message="semantic.yaml should declare approved metrics",
             )
         )
     return findings
 
 
-def _production_findings(
-    project: DataProductProject,
-    profile: ReadinessProfile,
-) -> list[Finding]:
+def _production_findings(project: DataProductProject, report: TrustReport) -> list[Finding]:
+    from dataproduct_kit.models import Finding
+
     findings: list[Finding] = []
     if not project.policy.allowed_purposes:
         findings.append(
             Finding(
                 level="error",
                 code="profile.allowed_purposes_missing",
-                message=f"{profile} profile requires policy allowed_purposes",
+                message="policy.yaml must declare allowed_purposes",
             )
         )
     if "agent_context" not in project.policy.allowed_purposes:
@@ -85,59 +89,52 @@ def _production_findings(
             Finding(
                 level="error",
                 code="profile.agent_purpose_missing",
-                message=(
-                    f"{profile} profile requires policy allowed_purposes to include "
-                    "'agent_context'"
-                ),
+                message="policy.yaml allowed_purposes must include agent_context",
             )
         )
-    missing_sensitive_fields = sorted(
+    contract_sensitive = {
         field.name
         for field in project.contract.schema
-        if _is_sensitive(field.classification) and field.name not in project.policy.sensitive_fields
-    )
-    if missing_sensitive_fields:
+        if (field.classification or "").lower() in SENSITIVE_CLASSIFICATIONS
+    }
+    undeclared = sorted(contract_sensitive - set(project.policy.sensitive_fields))
+    if undeclared:
         findings.append(
             Finding(
                 level="error",
                 code="profile.sensitive_fields_missing",
                 message=(
-                    f"{profile} profile requires sensitive classified field(s) in "
-                    f"policy sensitive_fields: {', '.join(missing_sensitive_fields)}"
+                    "policy.yaml sensitive_fields must include classified sensitive "
+                    f"field(s): {', '.join(undeclared)}"
                 ),
             )
         )
     return findings
 
 
-def _regulated_findings(project: DataProductProject) -> list[Finding]:
-    unclassified_fields = sorted(
-        field.name for field in project.contract.schema if not (field.classification or "").strip()
+def _regulated_findings(project: DataProductProject, report: TrustReport) -> list[Finding]:
+    from dataproduct_kit.models import Finding
+
+    findings: list[Finding] = []
+    missing_classification = sorted(
+        field.name
+        for field in project.contract.schema
+        if _is_missing_classification(field.classification)
     )
-    if not unclassified_fields:
-        return []
-    return [
-        Finding(
-            level="error",
-            code="profile.classification_missing",
-            message=(
-                "regulated profile requires classifications for field(s): "
-                f"{', '.join(unclassified_fields)}"
-            ),
+    if missing_classification:
+        findings.append(
+            Finding(
+                level="error",
+                code="profile.classification_missing",
+                message=(
+                    "regulated profile requires classifications for field(s): "
+                    + ", ".join(missing_classification)
+                ),
+            )
         )
-    ]
+    return findings
 
 
-def _is_sensitive(classification: str | None) -> bool:
-    return (classification or "").strip().lower() in SENSITIVE_CLASSIFICATIONS
-
-
-def _without_duplicates(findings: list[Finding], existing_codes: set[str]) -> list[Finding]:
-    seen = set(existing_codes)
-    unique: list[Finding] = []
-    for finding in findings:
-        if finding.code in seen:
-            continue
-        seen.add(finding.code)
-        unique.append(finding)
-    return unique
+def _is_missing_classification(classification: str | None) -> bool:
+    normalized = (classification or "").strip().lower()
+    return not normalized or normalized in PLACEHOLDER_CLASSIFICATIONS

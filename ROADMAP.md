@@ -33,6 +33,10 @@ from local manifests.
 
 - Add repository config for CI discovery filters and default gate policy.
 - Add expiring suppressions for known findings.
+- Add readiness profiles for starter, production, and regulated adoption.
+- Add CSV onboarding for teams bringing their own local data.
+- Add a doctor command that explains production-readiness gaps.
+- Stabilize CI JSON output for v1 automation consumers.
 - Add release artifact smoke testing.
 - Add trusted publishing workflow scaffolding for PyPI/TestPyPI.
 - Add public maintainer issue templates and starter backlog.

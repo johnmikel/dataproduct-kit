@@ -12,11 +12,12 @@ def test_agent_context_requires_agent_context_purpose(tmp_path: Path) -> None:
     from dataproduct_kit.validators import validate_project
 
     write_valid_project(tmp_path)
-    policy_path = tmp_path / "policy.yaml"
-    policy_path.write_text(
-        policy_path.read_text(encoding="utf-8").replace("  - agent_context\n", ""),
+    policy = (tmp_path / "policy.yaml").read_text(encoding="utf-8")
+    (tmp_path / "policy.yaml").write_text(
+        policy.replace("  - agent_context\n", ""),
         encoding="utf-8",
     )
+
     project = load_project(tmp_path)
 
     with pytest.raises(ValueError, match="agent_context"):
@@ -29,15 +30,13 @@ def test_agent_context_rejects_sensitive_dimensions(tmp_path: Path) -> None:
     from dataproduct_kit.validators import validate_project
 
     write_valid_project(tmp_path)
-    semantic_path = tmp_path / "semantic.yaml"
-    semantic_path.write_text(
-        semantic_path.read_text(encoding="utf-8")
-        .replace("dimensions: [plan]", "dimensions: [customer_id]")
-        .replace(
-            "  - name: plan\n"
-            "    dataset: subscriptions\n"
-            "    column: plan\n"
-            "    type: string\n",
+    semantic = (tmp_path / "semantic.yaml").read_text(encoding="utf-8")
+    (tmp_path / "semantic.yaml").write_text(
+        semantic.replace(
+            "dimensions: [plan]",
+            "dimensions: [customer_id]",
+        ).replace(
+            "  - name: plan\n    dataset: subscriptions\n    column: plan\n    type: string\n",
             "  - name: customer_id\n"
             "    dataset: subscriptions\n"
             "    column: customer_id\n"

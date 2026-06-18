@@ -65,6 +65,7 @@ def test_compatibility_and_ci_rollout_docs_are_present() -> None:
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     compatibility = (ROOT / "docs/compatibility.md").read_text(encoding="utf-8")
     rollout = (ROOT / "docs/ci-rollout.md").read_text(encoding="utf-8")
+    json_output = (ROOT / "docs/json-output.md").read_text(encoding="utf-8")
 
     assert "docs/compatibility.md" in readme
     assert "docs/ci-rollout.md" in readme
@@ -75,6 +76,25 @@ def test_compatibility_and_ci_rollout_docs_are_present() -> None:
     assert "fail-only gate" in rollout
     assert "warn gate" in rollout
     assert "suppression cleanup" in rollout
+    assert "JSON Output Compatibility" in json_output
+    assert "products[*].trust_report.policy" in json_output
+
+
+def test_v1_docs_cover_profiles_from_csv_and_json_contract() -> None:
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    profiles = (ROOT / "docs/readiness-profiles.md").read_text(encoding="utf-8")
+    from_csv = (ROOT / "docs/from-csv.md").read_text(encoding="utf-8")
+    json_output = (ROOT / "docs/json-output.md").read_text(encoding="utf-8")
+
+    assert "open source CI gate for agent-safe data products" in readme
+    assert "dataproduct-kit init demo demo --template saas-churn" in readme
+    assert "dataproduct-kit ci demo --profile starter" in readme
+    assert "dataproduct-kit report demo --format markdown" in readme
+    assert "dataproduct-kit context demo --metric churn_rate --format json" in readme
+    assert "dataproduct-kit init from-csv" in readme
+    assert "starter" in profiles and "production" in profiles and "regulated" in profiles
+    assert "TODO" in from_csv
+    assert "status" in json_output and "products" in json_output
 
 
 def test_ci_workflow_uses_node24_action_versions() -> None:

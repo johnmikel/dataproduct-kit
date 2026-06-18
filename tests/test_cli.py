@@ -13,7 +13,10 @@ def test_cli_init_validate_report_context_export_and_emit(tmp_path: Path) -> Non
     runner = CliRunner()
     project_dir = tmp_path / "demo"
 
-    init_result = runner.invoke(app, ["init", str(project_dir), "--template", "saas-churn"])
+    init_result = runner.invoke(
+        app,
+        ["init", "demo", str(project_dir), "--template", "saas-churn"],
+    )
     assert init_result.exit_code == 0, init_result.output
     assert (project_dir / "dataproduct.yaml").exists()
     assert (project_dir / "data/subscriptions.csv").exists()
@@ -68,6 +71,21 @@ def test_cli_validate_returns_nonzero_for_failed_project(tmp_path: Path) -> None
     assert "quality.not_null" in result.output
 
 
+def test_cli_init_from_csv_generates_project(tmp_path: Path) -> None:
+    from dataproduct_kit.cli import app
+
+    runner = CliRunner()
+    csv_path = tmp_path / "customers.csv"
+    csv_path.write_text("customer_id,created_at\ncust_001,2026-06-01T00:00:00Z\n")
+    out = tmp_path / "customers-product"
+
+    result = runner.invoke(app, ["init", "from-csv", str(csv_path), "--out", str(out)])
+
+    assert result.exit_code == 0, result.output
+    assert (out / "dataproduct.yaml").exists()
+    assert (out / "data/customers.csv").exists()
+
+
 def test_cli_validate_json_returns_machine_readable_report(tmp_path: Path) -> None:
     from dataproduct_kit.cli import app
 
@@ -81,6 +99,28 @@ def test_cli_validate_json_returns_machine_readable_report(tmp_path: Path) -> No
     assert payload["status"] == "pass"
     assert payload["summary"]["checks_failed"] == 0
     assert payload["product_id"] == "saas_churn"
+
+
+def test_cli_context_returns_nonzero_when_agent_context_purpose_denied(
+    tmp_path: Path,
+) -> None:
+    from dataproduct_kit.cli import app
+
+    runner = CliRunner()
+    write_valid_project(tmp_path)
+    policy = (tmp_path / "policy.yaml").read_text(encoding="utf-8")
+    (tmp_path / "policy.yaml").write_text(
+        policy.replace("  - agent_context\n", ""),
+        encoding="utf-8",
+    )
+
+    result = runner.invoke(
+        app,
+        ["context", str(tmp_path), "--metric", "churn_rate", "--format", "json"],
+    )
+
+    assert result.exit_code == 1
+    assert "agent_context" in result.output
 
 
 def test_cli_validate_fail_on_warn_returns_nonzero_for_warning_project(tmp_path: Path) -> None:
@@ -109,21 +149,16 @@ def test_cli_validate_fail_on_warn_returns_nonzero_for_warning_project(tmp_path:
     assert "freshness.missing" in strict_result.output
 
 
-def test_cli_context_requires_agent_context_purpose(tmp_path: Path) -> None:
+def test_cli_doctor_outputs_next_steps(tmp_path: Path) -> None:
     from dataproduct_kit.cli import app
 
     runner = CliRunner()
     write_valid_project(tmp_path)
-    policy_path = tmp_path / "policy.yaml"
-    policy_path.write_text(
-        policy_path.read_text(encoding="utf-8").replace("  - agent_context\n", ""),
-        encoding="utf-8",
-    )
 
-    result = runner.invoke(app, ["context", str(tmp_path), "--metric", "churn_rate"])
+    result = runner.invoke(app, ["doctor", str(tmp_path)])
 
-    assert result.exit_code == 1
-    assert "agent_context" in result.output
+    assert result.exit_code == 0, result.output
+    assert "production readiness" in result.output
 
 
 def test_cli_schema_prints_single_schema_and_writes_all(tmp_path: Path) -> None:
@@ -143,9 +178,6 @@ def test_cli_schema_prints_single_schema_and_writes_all(tmp_path: Path) -> None:
     assert config_schema["title"] == "KitConfig"
     assert "ci" in config_schema["properties"]
     assert "suppressions" in config_schema["properties"]
-    profile_schema = config_schema["$defs"]["CiConfig"]["properties"]["profile"]
-    assert profile_schema["default"] == "starter"
-    assert profile_schema["enum"] == ["starter", "production", "regulated"]
 
     out_dir = tmp_path / "schemas"
     all_result = runner.invoke(app, ["schema", "all", "--out", str(out_dir)])

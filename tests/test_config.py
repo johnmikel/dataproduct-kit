@@ -8,6 +8,48 @@ from conftest import write_text, write_valid_project
 from typer.testing import CliRunner
 
 
+def test_config_accepts_ci_profile(tmp_path: Path) -> None:
+    from dataproduct_kit.config import load_config
+
+    (tmp_path / "dataproduct-kit.toml").write_text(
+        "[ci]\nprofile = \"production\"\nfail_on = \"warn\"\n",
+        encoding="utf-8",
+    )
+
+    config = load_config(tmp_path)
+
+    assert config.ci.profile == "production"
+    assert config.ci.fail_on == "warn"
+
+
+def test_config_rejects_unknown_ci_profile(tmp_path: Path) -> None:
+    from dataproduct_kit.config import ConfigLoadError, load_config
+
+    (tmp_path / "dataproduct-kit.toml").write_text(
+        "[ci]\nprofile = \"anything\"\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ConfigLoadError) as error:
+        load_config(tmp_path)
+
+    assert "ci.profile" in str(error.value)
+
+
+def test_validate_suite_rejects_unknown_profile_override(tmp_path: Path) -> None:
+    from dataproduct_kit.suite import validate_suite
+
+    write_valid_project(tmp_path / "data-products/pass")
+
+    suite = validate_suite(tmp_path, profile_override="not-real")
+
+    assert suite.status == "fail"
+    assert suite.profile == "starter"
+    assert suite.config["profile"] == "starter"
+    assert suite.findings[0].code == "config.invalid"
+    assert "ci.profile" in suite.findings[0].message
+
+
 def test_ci_config_filters_discovered_products(tmp_path: Path) -> None:
     from dataproduct_kit.suite import validate_suite
 

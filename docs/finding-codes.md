@@ -69,19 +69,19 @@ called out in the changelog.
 
 ## Readiness Profiles
 
-- `profile.agent_constraints_missing`: the selected profile requires
-  agent-specific usage constraints in `policy.yaml`.
-- `profile.agent_purpose_missing`: the `production` or `regulated` profile
-  requires `agent_context` in `allowed_purposes`.
-- `profile.allowed_purposes_missing`: the `production` or `regulated` profile
-  requires at least one allowed purpose.
-- `profile.classification_missing`: the `regulated` profile requires every
-  contract field to have a classification.
-- `profile.quality_checks_missing`: the selected profile requires at least one
-  contract quality check.
-- `profile.semantic_metrics_missing`: the selected profile requires at least one
-  semantic metric.
-- `profile.sensitive_fields_missing`: the `production` or `regulated` profile
-  requires fields classified as sensitive to appear in `sensitive_fields`.
-- `profile.unsuppressed_warning`: the `regulated` profile does not allow
-  unsuppressed warnings.
+- `profile.agent_constraints_missing`: `policy.yaml` does not declare
+  `agent_constraints` for agent-safe use.
+- `profile.quality_checks_missing`: `contract.yaml` does not declare any quality
+  checks.
+- `profile.semantic_metrics_missing`: `semantic.yaml` does not declare approved
+  metrics.
+- `profile.allowed_purposes_missing`: `policy.yaml` does not declare allowed
+  purposes.
+- `profile.agent_purpose_missing`: `policy.yaml` `allowed_purposes` does not
+  include `agent_context`.
+- `profile.sensitive_fields_missing`: a field classified as sensitive in
+  `contract.yaml` is missing from `policy.yaml` `sensitive_fields`.
+- `profile.classification_missing`: the `regulated` profile found contract
+  fields without classifications.
+- `profile.unsuppressed_warning`: the `regulated` profile found one or more
+  warning-level findings that are not suppressed.

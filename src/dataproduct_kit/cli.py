@@ -13,6 +13,8 @@ from dataproduct_kit.ci import (
     write_sarif_report,
 )
 from dataproduct_kit.context import build_agent_context
+from dataproduct_kit.csv_scaffold import scaffold_from_csv
+from dataproduct_kit.doctor import inspect_project
 from dataproduct_kit.loader import ManifestLoadError, load_project
 from dataproduct_kit.profiles import ReadinessProfile
 from dataproduct_kit.reports import render_json_report, render_markdown_report
@@ -23,10 +25,12 @@ from dataproduct_kit.templates import scaffold_template
 from dataproduct_kit.validators import validate_project
 
 app = typer.Typer(help="Validate agent-ready data products from local manifests.")
+init_app = typer.Typer(help="Scaffold demo or starter data products.")
+app.add_typer(init_app, name="init")
 
 
-@app.command()
-def init(
+@init_app.command("demo")
+def init_demo(
     path: Annotated[Path, typer.Argument(help="Directory to scaffold.")] = Path("."),
     template: Annotated[str, typer.Option("--template", help="Template name.")] = "saas-churn",
 ) -> None:
@@ -37,6 +41,20 @@ def init(
         typer.echo(str(error), err=True)
         raise typer.Exit(1) from error
     typer.echo(f"scaffolded {template} at {path}")
+
+
+@init_app.command("from-csv")
+def init_from_csv(
+    csv_path: Annotated[Path, typer.Argument(help="CSV file to scaffold from.")],
+    out: Annotated[Path, typer.Option("--out", help="Output data product directory.")],
+) -> None:
+    """Scaffold starter manifests from a local CSV file."""
+    try:
+        scaffold_from_csv(csv_path, out)
+    except ValueError as error:
+        typer.echo(str(error), err=True)
+        raise typer.Exit(1) from error
+    typer.echo(f"scaffolded CSV data product at {out}")
 
 
 @app.command()
@@ -75,13 +93,13 @@ def ci(
         str | None,
         typer.Option("--fail-on", help="Exit nonzero at this status threshold."),
     ] = None,
-    profile: Annotated[
-        ReadinessProfile | None,
-        typer.Option("--profile", help="Readiness profile to apply."),
-    ] = None,
     sarif: Annotated[
         Path | None,
         typer.Option("--sarif", help="Write SARIF report to this file."),
+    ] = None,
+    profile: Annotated[
+        ReadinessProfile | None,
+        typer.Option("--profile", help="Readiness profile to apply."),
     ] = None,
 ) -> None:
     """Validate every data product under a repo and emit CI-friendly output."""
@@ -100,6 +118,32 @@ def ci(
         typer.echo(render_text_suite(suite), nl=False)
     if _should_fail(suite.status, effective_fail_on):
         raise typer.Exit(1)
+
+
+@app.command()
+def doctor(
+    path: Annotated[Path, typer.Argument(help="Data product directory.")],
+    profile: Annotated[
+        ReadinessProfile,
+        typer.Option("--profile", help="Readiness profile to inspect."),
+    ] = "production",
+    format: Annotated[
+        Literal["text", "json"],
+        typer.Option("--format", help="Output format."),
+    ] = "text",
+) -> None:
+    """Inspect production readiness and print practical next steps."""
+    try:
+        payload = inspect_project(path, profile)
+    except ManifestLoadError as error:
+        typer.echo(str(error), err=True)
+        raise typer.Exit(1) from error
+    if format == "json":
+        typer.echo(json.dumps(payload, indent=2, sort_keys=True) + "\n", nl=False)
+        return
+    typer.echo(f"production readiness: {payload['status']} ({payload['profile']})")
+    for item in payload["next_steps"]:
+        typer.echo(f"- {item}")
 
 
 @app.command()

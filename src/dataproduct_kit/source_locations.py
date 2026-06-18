@@ -8,10 +8,21 @@ from dataproduct_kit.models import Finding
 
 _QUOTED_TOKEN = re.compile(r"'([^']+)'")
 
+_PROFILE_MANIFEST_BY_CODE = {
+    "profile.agent_constraints_missing": "policy.yaml",
+    "profile.allowed_purposes_missing": "policy.yaml",
+    "profile.agent_purpose_missing": "policy.yaml",
+    "profile.sensitive_fields_missing": "policy.yaml",
+    "profile.quality_checks_missing": "contract.yaml",
+    "profile.classification_missing": "contract.yaml",
+    "profile.semantic_metrics_missing": "semantic.yaml",
+    "profile.unsuppressed_warning": CONFIG_FILENAME,
+}
+
 
 def manifest_for_code(code: str) -> str:
-    if code.startswith("profile."):
-        return _profile_manifest_for_code(code)
+    if code in _PROFILE_MANIFEST_BY_CODE:
+        return _PROFILE_MANIFEST_BY_CODE[code]
     prefix = code.split(".", 1)[0]
     if prefix in {"config", "suppression"}:
         return CONFIG_FILENAME
@@ -21,21 +32,6 @@ def manifest_for_code(code: str) -> str:
         return "semantic.yaml"
     if prefix == "policy":
         return "policy.yaml"
-    return "dataproduct.yaml"
-
-
-def _profile_manifest_for_code(code: str) -> str:
-    if code in {
-        "profile.agent_constraints_missing",
-        "profile.agent_purpose_missing",
-        "profile.allowed_purposes_missing",
-        "profile.sensitive_fields_missing",
-    }:
-        return "policy.yaml"
-    if code in {"profile.classification_missing", "profile.quality_checks_missing"}:
-        return "contract.yaml"
-    if code == "profile.semantic_metrics_missing":
-        return "semantic.yaml"
     return "dataproduct.yaml"
 
 

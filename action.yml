@@ -18,6 +18,10 @@ inputs:
     description: Output format for validation results.
     required: false
     default: "github"
+  profile:
+    description: Readiness profile to apply.
+    required: false
+    default: "production"
   sarif:
     description: Path where the SARIF report should be written.
     required: false
@@ -45,6 +49,7 @@ runs:
       shell: bash
       run: |
         dataproduct-kit ci "${{ inputs.path }}" \
+          --profile "${{ inputs.profile }}" \
           --format "${{ inputs.format }}" \
           --profile "${{ inputs.profile }}" \
           --fail-on "${{ inputs.fail-on }}" \

@@ -14,7 +14,7 @@ from dataproduct_kit.config import (
 from dataproduct_kit.finding_codes import KNOWN_FINDING_CODES
 from dataproduct_kit.loader import ManifestLoadError, load_project
 from dataproduct_kit.models import Finding, SuiteProductReport, ValidationSuiteReport
-from dataproduct_kit.profiles import DEFAULT_PROFILE
+from dataproduct_kit.profiles import DEFAULT_PROFILE, ReadinessProfile, profile_findings
 from dataproduct_kit.source_locations import with_config_source_lines, with_product_source_lines
 from dataproduct_kit.validators import validate_project
 
@@ -95,13 +95,33 @@ def validate_suite(root: Path, profile_override: str | None = None) -> Validatio
     matched_suppressions: set[tuple[str, str, str, str]] = set()
     products = []
     for product_dir in product_dirs:
-        product = _validate_product(root, product_dir)
+        product = _validate_product(root, product_dir, config.ci.profile)
         products.append(_apply_suppressions(product, config, matched_suppressions))
     unused_findings = with_config_source_lines(
         root,
         _unused_suppression_findings(config, matched_suppressions),
     )
     config_findings = [*config_findings, *unused_findings]
+    if config.ci.profile == "regulated":
+        unsuppressed_warnings = [
+            finding
+            for product in products
+            for finding in product.findings
+            if finding.level == "warning" and not finding.suppressed
+        ]
+        if unsuppressed_warnings:
+            config_findings.extend(
+                with_config_source_lines(
+                    root,
+                    [
+                        Finding(
+                            level="error",
+                            code="profile.unsuppressed_warning",
+                            message="regulated profile does not allow unsuppressed warnings",
+                        )
+                    ],
+                )
+            )
     products_passed = sum(1 for product in products if product.status == "pass")
     products_warned = sum(1 for product in products if product.status == "warn")
     products_failed = sum(1 for product in products if product.status == "fail")
@@ -135,7 +155,11 @@ def validate_suite(root: Path, profile_override: str | None = None) -> Validatio
     )
 
 
-def _validate_product(root: Path, product_dir: Path) -> SuiteProductReport:
+def _validate_product(
+    root: Path,
+    product_dir: Path,
+    profile: ReadinessProfile,
+) -> SuiteProductReport:
     product_path = _relative_path(product_dir, root)
     try:
         project = load_project(product_dir)
@@ -156,14 +180,24 @@ def _validate_product(root: Path, product_dir: Path) -> SuiteProductReport:
             findings=with_product_source_lines(root, product_path, [finding]),
         )
     report = validate_project(project)
-    findings = with_product_source_lines(root, product_path, report.findings)
-    report = report.model_copy(update={"findings": findings})
+    profile_findings_list = profile_findings(project, report, profile)
+    findings = [*report.findings, *profile_findings_list]
+    errors = [finding for finding in findings if finding.level == "error"]
+    warnings = [finding for finding in findings if finding.level == "warning"]
+    status = "fail" if errors else "warn" if warnings else "pass"
+    summary = dict(report.summary)
+    summary["checks_failed"] = len(errors)
+    summary["checks_warned"] = len(warnings)
+    findings = with_product_source_lines(root, product_path, findings)
+    report = report.model_copy(
+        update={"status": status, "findings": findings, "summary": summary}
+    )
     return SuiteProductReport(
         path=product_path,
         product_id=report.product_id,
         product_name=report.product_name,
-        status=report.status,
-        summary=report.summary,
+        status=status,
+        summary=summary,
         findings=findings,
         trust_report=report,
     )

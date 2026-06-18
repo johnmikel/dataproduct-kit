@@ -83,6 +83,28 @@ def test_cli_validate_json_returns_machine_readable_report(tmp_path: Path) -> No
     assert payload["product_id"] == "saas_churn"
 
 
+def test_cli_context_returns_nonzero_when_agent_context_purpose_denied(
+    tmp_path: Path,
+) -> None:
+    from dataproduct_kit.cli import app
+
+    runner = CliRunner()
+    write_valid_project(tmp_path)
+    policy = (tmp_path / "policy.yaml").read_text(encoding="utf-8")
+    (tmp_path / "policy.yaml").write_text(
+        policy.replace("  - agent_context\n", ""),
+        encoding="utf-8",
+    )
+
+    result = runner.invoke(
+        app,
+        ["context", str(tmp_path), "--metric", "churn_rate", "--format", "json"],
+    )
+
+    assert result.exit_code == 1
+    assert "agent_context" in result.output
+
+
 def test_cli_validate_fail_on_warn_returns_nonzero_for_warning_project(tmp_path: Path) -> None:
     from dataproduct_kit.cli import app
 

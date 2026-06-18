@@ -4,6 +4,7 @@ import csv
 import re
 import shutil
 from datetime import datetime
+from itertools import islice
 from pathlib import Path
 from typing import Any
 
@@ -13,10 +14,9 @@ import yaml
 def scaffold_from_csv(csv_path: Path, out: Path) -> None:
     if not csv_path.exists():
         raise ValueError(f"CSV file not found: {csv_path}")
-    rows = _sample_rows(csv_path)
-    if not rows:
+    columns, rows = _sample_rows(csv_path)
+    if not columns:
         raise ValueError(f"CSV file has no header row: {csv_path}")
-    columns = list(rows[0].keys())
     dataset_id = _safe_name(csv_path.stem)
     out.mkdir(parents=True, exist_ok=True)
     data_dir = out / "data"
@@ -29,9 +29,11 @@ def scaffold_from_csv(csv_path: Path, out: Path) -> None:
     _write_yaml(out / "policy.yaml", _policy_payload())
 
 
-def _sample_rows(csv_path: Path) -> list[dict[str, str]]:
+def _sample_rows(csv_path: Path) -> tuple[list[str], list[dict[str, str]]]:
     with csv_path.open(newline="", encoding="utf-8") as handle:
-        return list(csv.DictReader(handle))[:25]
+        reader = csv.DictReader(handle)
+        columns = list(reader.fieldnames or [])
+        return columns, list(islice(reader, 25))
 
 
 def _product_payload(dataset_id: str, target_csv: Path) -> dict[str, Any]:

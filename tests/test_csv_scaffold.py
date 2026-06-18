@@ -29,6 +29,9 @@ def test_scaffold_from_csv_writes_starter_manifests(tmp_path: Path) -> None:
     policy = yaml.safe_load((out / "policy.yaml").read_text(encoding="utf-8"))
     assert product["owner"]["name"] == "TODO"
     assert contract["schema"][0]["name"] == "customer_id"
+    assert contract["quality_checks"] == [
+        {"name": "row_count_min", "type": "row_count_min", "value": 1}
+    ]
     assert policy["allowed_purposes"] == ["TODO"]
     assert "TODO" in policy["access_notes"]
 
@@ -57,6 +60,28 @@ def test_scaffold_from_csv_allows_header_only_csv(tmp_path: Path) -> None:
             "classification": "TODO",
         },
     ]
+    assert contract["quality_checks"] == [
+        {"name": "row_count_min", "type": "row_count_min", "value": 0}
+    ]
+
+
+def test_scaffold_from_csv_header_only_project_does_not_fail_row_count(
+    tmp_path: Path,
+) -> None:
+    from dataproduct_kit.csv_scaffold import scaffold_from_csv
+    from dataproduct_kit.loader import load_project
+    from dataproduct_kit.validators import validate_project
+
+    csv_path = tmp_path / "customers.csv"
+    csv_path.write_text("customer_id,email\n", encoding="utf-8")
+    out = tmp_path / "customers-product"
+
+    scaffold_from_csv(csv_path, out)
+    report = validate_project(load_project(out))
+
+    assert [
+        finding for finding in report.findings if finding.code == "quality.row_count_min"
+    ] == []
 
 
 def test_scaffold_from_csv_missing_file_raises_value_error(tmp_path: Path) -> None:

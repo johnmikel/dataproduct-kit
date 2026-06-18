@@ -77,7 +77,7 @@ def _contract_payload(
             for column in columns
         ],
         "quality_checks": [
-            {"name": "row_count_min", "type": "row_count_min", "value": 1},
+            {"name": "row_count_min", "type": "row_count_min", "value": 1 if rows else 0},
         ],
     }
 

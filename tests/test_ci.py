@@ -195,16 +195,19 @@ def test_cli_ci_fail_on_warn_exits_nonzero_for_warning_suite(tmp_path: Path) -> 
 
 
 def test_action_metadata_runs_ci_command() -> None:
-    action = yaml.safe_load(Path("action.yml").read_text(encoding="utf-8"))
+    action_text = Path("action.yml").read_text(encoding="utf-8")
+    action = yaml.safe_load(action_text)
 
     assert action["runs"]["using"] == "composite"
     assert action["inputs"]["path"]["default"] == "."
     assert action["inputs"]["fail-on"]["default"] == "fail"
+    assert action_text.count("\n  profile:\n") == 1
     assert action["inputs"]["profile"]["default"] == "production"
     assert any(step.get("uses") == "actions/setup-python@v6" for step in action["runs"]["steps"])
     commands = "\n".join(step.get("run", "") for step in action["runs"]["steps"])
     assert 'python -m pip install "${{ github.action_path }}"' in commands
     assert 'dataproduct-kit ci "${{ inputs.path }}"' in commands
+    assert commands.count('--profile "${{ inputs.profile }}"') == 1
     assert '--profile "${{ inputs.profile }}"' in commands
     assert '--format "${{ inputs.format }}"' in commands
     assert '--sarif "${{ inputs.sarif }}"' in commands

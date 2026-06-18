@@ -9,6 +9,8 @@
 - Add suppression documentation and public issue templates.
 - Add Trusted Publishing setup docs and a v0.4.0 release checklist.
 - Add a manual TestPyPI-only publishing dry run.
+- Add config JSON Schema export, unused suppression warnings, source line
+  metadata for CI annotations/SARIF, and production rollout docs.
 
 ## v0.3.0 - 2026-06-17
 

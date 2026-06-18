@@ -31,6 +31,8 @@ command does not pass `--fail-on`.
 
 - Suppression codes must be known finding codes.
 - Expired suppressions fail the suite.
+- Active suppressions that match no current finding produce a
+  `suppression.unused` warning.
 - Suppressed findings do not create GitHub annotations.
 - JSON and text output still include the suppressed finding.
 - SARIF output includes an external suppression with the reason and expiry.
@@ -42,5 +44,7 @@ Treat suppressions like production exceptions:
 - Keep the reason specific enough for an auditor or new maintainer.
 - Set the shortest practical expiry date.
 - Review expired suppressions before extending them.
+- Remove unused suppressions during cleanup so exceptions do not become stale
+  institutional memory.
 - Prefer fixing the manifest, data, or semantic definition over adding an
   exception.

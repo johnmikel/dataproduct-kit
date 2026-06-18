@@ -125,6 +125,7 @@ class Finding(BaseModel):
     code: str
     message: str
     check: str | None = None
+    line: int | None = None
     suppressed: bool = False
     suppression_reason: str | None = None
     suppression_expires: str | None = None

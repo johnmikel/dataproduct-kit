@@ -6,6 +6,7 @@ from typing import Literal
 
 from pydantic import BaseModel
 
+from dataproduct_kit.config import KitConfig
 from dataproduct_kit.models import (
     ContractManifest,
     DataProductManifest,
@@ -13,13 +14,14 @@ from dataproduct_kit.models import (
     SemanticManifest,
 )
 
-SchemaName = Literal["dataproduct", "contract", "semantic", "policy", "all"]
+SchemaName = Literal["dataproduct", "contract", "semantic", "policy", "config", "all"]
 
 SCHEMA_MODELS: dict[str, type[BaseModel]] = {
     "dataproduct": DataProductManifest,
     "contract": ContractManifest,
     "semantic": SemanticManifest,
     "policy": PolicyManifest,
+    "config": KitConfig,
 }
 
 

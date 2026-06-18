@@ -120,6 +120,13 @@ def test_cli_schema_prints_single_schema_and_writes_all(tmp_path: Path) -> None:
     assert single_schema["title"] == "DataProductManifest"
     assert "owner" in single_schema["required"]
 
+    config_result = runner.invoke(app, ["schema", "config"])
+    assert config_result.exit_code == 0, config_result.output
+    config_schema = json.loads(config_result.output)
+    assert config_schema["title"] == "KitConfig"
+    assert "ci" in config_schema["properties"]
+    assert "suppressions" in config_schema["properties"]
+
     out_dir = tmp_path / "schemas"
     all_result = runner.invoke(app, ["schema", "all", "--out", str(out_dir)])
 
@@ -128,6 +135,7 @@ def test_cli_schema_prints_single_schema_and_writes_all(tmp_path: Path) -> None:
     assert json.loads((out_dir / "contract.schema.json").read_text())["title"] == "ContractManifest"
     assert json.loads((out_dir / "semantic.schema.json").read_text())["title"] == "SemanticManifest"
     assert json.loads((out_dir / "policy.schema.json").read_text())["title"] == "PolicyManifest"
+    assert json.loads((out_dir / "config.schema.json").read_text())["title"] == "KitConfig"
 
 
 def test_cli_export_out_writes_file_without_breaking_stdout_default(tmp_path: Path) -> None:

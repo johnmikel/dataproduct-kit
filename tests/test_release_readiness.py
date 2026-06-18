@@ -55,8 +55,26 @@ def test_ci_adoption_docs_and_finding_codes_are_present() -> None:
     assert "schema.missing_column" in finding_docs
     assert "freshness.stale" in finding_docs
     assert "policy.unknown_sensitive_field" in finding_docs
+    assert "suppression.unused" in finding_docs
     assert "[[suppressions]]" in suppression_docs
     assert "expires" in suppression_docs
+    assert "unused" in suppression_docs
+
+
+def test_compatibility_and_ci_rollout_docs_are_present() -> None:
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    compatibility = (ROOT / "docs/compatibility.md").read_text(encoding="utf-8")
+    rollout = (ROOT / "docs/ci-rollout.md").read_text(encoding="utf-8")
+
+    assert "docs/compatibility.md" in readme
+    assert "docs/ci-rollout.md" in readme
+    assert "stable CLI" in compatibility
+    assert "stable config" in compatibility
+    assert "evolving manifests" in compatibility
+    assert "observe mode" in rollout
+    assert "fail-only gate" in rollout
+    assert "warn gate" in rollout
+    assert "suppression cleanup" in rollout
 
 
 def test_ci_workflow_uses_node24_action_versions() -> None:

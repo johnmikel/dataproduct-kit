@@ -8,6 +8,7 @@ from dataproduct_kit.config import ConfigLoadError, KitConfig, SuppressionConfig
 from dataproduct_kit.finding_codes import KNOWN_FINDING_CODES
 from dataproduct_kit.loader import ManifestLoadError, load_project
 from dataproduct_kit.models import Finding, SuiteProductReport, ValidationSuiteReport
+from dataproduct_kit.source_locations import with_config_source_lines, with_product_source_lines
 from dataproduct_kit.validators import validate_project
 
 
@@ -47,7 +48,7 @@ def validate_suite(root: Path) -> ValidationSuiteReport:
             findings=[finding],
             products=[],
         )
-    config_findings = _validate_suppressions(config)
+    config_findings = with_config_source_lines(root, _validate_suppressions(config))
     product_dirs = discover_project_dirs(root, config)
     if not product_dirs:
         finding = Finding(
@@ -55,7 +56,11 @@ def validate_suite(root: Path) -> ValidationSuiteReport:
             code="discovery.no_products",
             message="no dataproduct.yaml files found",
         )
-        findings = [*config_findings, finding]
+        unused_findings = with_config_source_lines(
+            root,
+            _unused_suppression_findings(config, matched_suppressions=set()),
+        )
+        findings = [*config_findings, *unused_findings, finding]
         return ValidationSuiteReport(
             status="fail",
             summary={
@@ -71,10 +76,16 @@ def validate_suite(root: Path) -> ValidationSuiteReport:
             products=[],
         )
 
-    products = [
-        _apply_suppressions(_validate_product(root, product_dir), config)
-        for product_dir in product_dirs
-    ]
+    matched_suppressions: set[tuple[str, str, str, str]] = set()
+    products = []
+    for product_dir in product_dirs:
+        product = _validate_product(root, product_dir)
+        products.append(_apply_suppressions(product, config, matched_suppressions))
+    unused_findings = with_config_source_lines(
+        root,
+        _unused_suppression_findings(config, matched_suppressions),
+    )
+    config_findings = [*config_findings, *unused_findings]
     products_passed = sum(1 for product in products if product.status == "pass")
     products_warned = sum(1 for product in products if product.status == "warn")
     products_failed = sum(1 for product in products if product.status == "fail")
@@ -83,11 +94,12 @@ def validate_suite(root: Path) -> ValidationSuiteReport:
         1 for product in products for finding in product.findings if finding.suppressed
     )
     config_failed = any(finding.level == "error" for finding in config_findings)
+    config_warned = any(finding.level == "warning" for finding in config_findings)
     status = (
         "fail"
         if config_failed or products_failed
         else "warn"
-        if products_warned
+        if config_warned or products_warned
         else "pass"
     )
     return ValidationSuiteReport(
@@ -124,23 +136,29 @@ def _validate_product(root: Path, product_dir: Path) -> SuiteProductReport:
                 "checks_warned": 0,
                 "checks_failed": 1,
             },
-            findings=[finding],
+            findings=with_product_source_lines(root, product_path, [finding]),
         )
     report = validate_project(project)
+    findings = with_product_source_lines(root, product_path, report.findings)
+    report = report.model_copy(update={"findings": findings})
     return SuiteProductReport(
         path=product_path,
         product_id=report.product_id,
         product_name=report.product_name,
         status=report.status,
         summary=report.summary,
-        findings=report.findings,
+        findings=findings,
         trust_report=report,
     )
 
 
-def _apply_suppressions(product: SuiteProductReport, config: KitConfig) -> SuiteProductReport:
+def _apply_suppressions(
+    product: SuiteProductReport,
+    config: KitConfig,
+    matched_suppressions: set[tuple[str, str, str, str]],
+) -> SuiteProductReport:
     findings = [
-        _suppress_finding(finding, product.path, config.suppressions)
+        _suppress_finding(finding, product.path, config.suppressions, matched_suppressions)
         for finding in product.findings
     ]
     unsuppressed_errors = sum(
@@ -168,6 +186,7 @@ def _suppress_finding(
     finding: Finding,
     product_path: str,
     suppressions: list[SuppressionConfig],
+    matched_suppressions: set[tuple[str, str, str, str]],
 ) -> Finding:
     if finding.suppressed:
         return finding
@@ -175,6 +194,7 @@ def _suppress_finding(
         if suppression.expires < date.today():
             continue
         if suppression.code == finding.code and _path_matches(product_path, suppression.path):
+            matched_suppressions.add(_suppression_key(suppression))
             return finding.model_copy(
                 update={
                     "suppressed": True,
@@ -183,6 +203,31 @@ def _suppress_finding(
                 }
             )
     return finding
+
+
+def _unused_suppression_findings(
+    config: KitConfig,
+    matched_suppressions: set[tuple[str, str, str, str]],
+) -> list[Finding]:
+    findings: list[Finding] = []
+    for suppression in config.suppressions:
+        if suppression.code not in KNOWN_FINDING_CODES:
+            continue
+        if suppression.expires < date.today():
+            continue
+        if _suppression_key(suppression) in matched_suppressions:
+            continue
+        findings.append(
+            Finding(
+                level="warning",
+                code="suppression.unused",
+                message=(
+                    f"suppression for '{suppression.code}' at '{suppression.path}' "
+                    "did not match any current finding"
+                ),
+            )
+        )
+    return findings
 
 
 def _validate_suppressions(config: KitConfig) -> list[Finding]:
@@ -208,6 +253,15 @@ def _validate_suppressions(config: KitConfig) -> list[Finding]:
                 )
             )
     return findings
+
+
+def _suppression_key(suppression: SuppressionConfig) -> tuple[str, str, str, str]:
+    return (
+        suppression.code,
+        suppression.path,
+        suppression.reason,
+        suppression.expires.isoformat(),
+    )
 
 
 def _included(path: str, include: list[str], exclude: list[str]) -> bool:

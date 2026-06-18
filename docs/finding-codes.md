@@ -14,6 +14,8 @@ called out in the changelog.
 - `suppression.expired`: a configured suppression is past its expiry date.
 - `suppression.unknown_code`: a configured suppression references an unknown
   finding code.
+- `suppression.unused`: an active suppression did not match any current finding
+  and should be reviewed for removal.
 
 ## Manifest Loading
 

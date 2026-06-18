@@ -56,7 +56,8 @@ def test_github_annotations_point_findings_to_manifest_files(tmp_path: Path) -> 
 
     output = render_github_annotations(validate_suite(tmp_path))
 
-    assert "::error file=products/fail/contract.yaml,title=schema.missing_column::" in output
+    assert "::error file=products/fail/contract.yaml,line=" in output
+    assert "title=schema.missing_column::" in output
     assert "required column 'monthly_recurring_revenue' is missing" in output
 
 
@@ -85,6 +86,7 @@ def test_sarif_report_contains_rules_results_and_locations(tmp_path: Path) -> No
     assert result["locations"][0]["physicalLocation"]["artifactLocation"]["uri"] == (
         "products/fail/contract.yaml"
     )
+    assert result["locations"][0]["physicalLocation"]["region"]["startLine"] > 0
 
 
 def test_cli_ci_outputs_json_github_annotations_and_sarif(tmp_path: Path) -> None:
@@ -116,10 +118,18 @@ def test_cli_ci_outputs_json_github_annotations_and_sarif(tmp_path: Path) -> Non
     )
 
     assert github_result.exit_code == 1
-    assert "::error file=products/fail/contract.yaml,title=schema.missing_column::" in (
+    assert "::error file=products/fail/contract.yaml,line=" in (
         github_result.output
     )
-    assert json.loads(sarif_path.read_text(encoding="utf-8"))["version"] == "2.1.0"
+    assert "title=schema.missing_column::" in github_result.output
+    sarif_payload = json.loads(sarif_path.read_text(encoding="utf-8"))
+    assert sarif_payload["version"] == "2.1.0"
+    assert (
+        sarif_payload["runs"][0]["results"][0]["locations"][0]["physicalLocation"]["region"][
+            "startLine"
+        ]
+        > 0
+    )
 
 
 def test_cli_ci_fail_on_warn_exits_nonzero_for_warning_suite(tmp_path: Path) -> None:

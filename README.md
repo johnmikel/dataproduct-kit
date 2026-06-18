@@ -189,7 +189,9 @@ See [docs/usage-scenarios.md](docs/usage-scenarios.md) for concrete usage
 scenarios. See [docs/ci-adoption.md](docs/ci-adoption.md) for pull request gate
 setup, [docs/finding-codes.md](docs/finding-codes.md) for stable finding
 codes, and [docs/suppressions.md](docs/suppressions.md) for expiring
-exceptions. Maintainer release notes live in
+exceptions. See [docs/compatibility.md](docs/compatibility.md) for supported
+automation surfaces and [docs/ci-rollout.md](docs/ci-rollout.md) for a staged
+production rollout. Maintainer release notes live in
 [docs/publishing.md](docs/publishing.md) and
 [docs/release-checklist.md](docs/release-checklist.md).
 

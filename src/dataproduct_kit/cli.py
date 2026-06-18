@@ -155,7 +155,7 @@ def export_command(
 @app.command()
 def schema(
     name: Annotated[
-        Literal["dataproduct", "contract", "semantic", "policy", "all"],
+        Literal["dataproduct", "contract", "semantic", "policy", "config", "all"],
         typer.Argument(help="Schema to emit."),
     ],
     out: Annotated[Path | None, typer.Option("--out", help="Directory for schema files.")] = None,

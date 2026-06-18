@@ -62,6 +62,38 @@ def test_active_suppression_marks_finding_and_changes_effective_status(tmp_path:
     assert finding.suppression_expires == "2999-01-01"
 
 
+def test_unused_active_suppression_warns_without_failing_product(tmp_path: Path) -> None:
+    from dataproduct_kit.ci import render_github_annotations
+    from dataproduct_kit.suite import validate_suite
+
+    write_valid_project(tmp_path / "data-products/pass")
+    write_text(
+        tmp_path / "dataproduct-kit.toml",
+        """
+        [[suppressions]]
+        code = "schema.missing_column"
+        path = "data-products/pass"
+        reason = "This migration has already landed and the suppression should be removed."
+        expires = "2999-01-01"
+        """,
+    )
+
+    suite = validate_suite(tmp_path)
+
+    assert suite.status == "warn"
+    assert suite.summary["products_passed"] == 1
+    assert suite.summary["products_warned"] == 0
+    assert suite.summary["findings_total"] == 1
+    assert suite.findings[0].code == "suppression.unused"
+    assert suite.findings[0].level == "warning"
+    assert "schema.missing_column" in suite.findings[0].message
+    assert suite.products[0].status == "pass"
+
+    annotations = render_github_annotations(suite)
+    assert "::warning file=dataproduct-kit.toml,line=" in annotations
+    assert "suppression.unused" in annotations
+
+
 def test_expired_suppression_fails_suite_and_does_not_suppress_finding(tmp_path: Path) -> None:
     from dataproduct_kit.suite import validate_suite
 

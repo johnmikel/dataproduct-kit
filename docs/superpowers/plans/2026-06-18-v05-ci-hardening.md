@@ -24,42 +24,42 @@
 
 ## Task 1: Config Schema CLI
 
-- [ ] Add a failing CLI test asserting `dataproduct-kit schema config` returns a JSON Schema for `KitConfig`.
-- [ ] Add a failing CLI test asserting `schema all --out` writes `config.schema.json`.
-- [ ] Run the focused tests and confirm failure because `config` is not an accepted schema name.
-- [ ] Import `KitConfig` into `schemas.py`, add it to `SCHEMA_MODELS`, and extend the `SchemaName`/CLI literal to include `config`.
-- [ ] Run the focused tests and confirm they pass.
+- [x] Add a failing CLI test asserting `dataproduct-kit schema config` returns a JSON Schema for `KitConfig`.
+- [x] Add a failing CLI test asserting `schema all --out` writes `config.schema.json`.
+- [x] Run the focused tests and confirm failure because `config` is not an accepted schema name.
+- [x] Import `KitConfig` into `schemas.py`, add it to `SCHEMA_MODELS`, and extend the `SchemaName`/CLI literal to include `config`.
+- [x] Run the focused tests and confirm they pass.
 
 ## Task 2: Unused Suppression Warning
 
-- [ ] Add a failing suite test with a valid passing product and an active suppression that matches no current finding.
-- [ ] Assert the suite status is `warn`, the suite-level finding code is `suppression.unused`, and the product remains `pass`.
-- [ ] Run the focused test and confirm failure because no unused suppression warning exists.
-- [ ] Track matched suppressions while applying suppressions.
-- [ ] Emit one suite-level `suppression.unused` warning for each valid, active suppression that matched no finding.
-- [ ] Add `suppression.unused` to known codes and docs.
-- [ ] Run focused config/suite tests and confirm they pass.
+- [x] Add a failing suite test with a valid passing product and an active suppression that matches no current finding.
+- [x] Assert the suite status is `warn`, the suite-level finding code is `suppression.unused`, and the product remains `pass`.
+- [x] Run the focused test and confirm failure because no unused suppression warning exists.
+- [x] Track matched suppressions while applying suppressions.
+- [x] Emit one suite-level `suppression.unused` warning for each valid, active suppression that matched no finding.
+- [x] Add `suppression.unused` to known codes and docs.
+- [x] Run focused config/suite tests and confirm they pass.
 
 ## Task 3: Source Line Locations
 
-- [ ] Add failing tests asserting GitHub annotations include `line=` for a schema drift finding.
-- [ ] Add failing tests asserting SARIF includes `physicalLocation.region.startLine`.
-- [ ] Add a failing test asserting a suite-level suppression warning points at `dataproduct-kit.toml`.
-- [ ] Run focused CI/config tests and confirm failure because findings lack line metadata.
-- [ ] Add `Finding.line: int | None`.
-- [ ] Implement best-effort source lookup in `source_locations.py` by selecting manifest files from finding codes and scanning for useful tokens.
-- [ ] Enrich product and suite-level findings in `suite.py` before rendering.
-- [ ] Update GitHub annotation properties and SARIF location output to include line metadata when present.
-- [ ] Run focused CI/config tests and confirm they pass.
+- [x] Add failing tests asserting GitHub annotations include `line=` for a schema drift finding.
+- [x] Add failing tests asserting SARIF includes `physicalLocation.region.startLine`.
+- [x] Add a failing test asserting a suite-level suppression warning points at `dataproduct-kit.toml`.
+- [x] Run focused CI/config tests and confirm failure because findings lack line metadata.
+- [x] Add `Finding.line: int | None`.
+- [x] Implement best-effort source lookup in `source_locations.py` by selecting manifest files from finding codes and scanning for useful tokens.
+- [x] Enrich product and suite-level findings in `suite.py` before rendering.
+- [x] Update GitHub annotation properties and SARIF location output to include line metadata when present.
+- [x] Run focused CI/config tests and confirm they pass.
 
 ## Task 4: Production Adoption Docs
 
-- [ ] Add failing release-readiness tests for compatibility and CI rollout docs.
-- [ ] Run focused doc tests and confirm failure because docs are missing.
-- [ ] Create `docs/compatibility.md` describing stable CLI/config and evolving manifests.
-- [ ] Create `docs/ci-rollout.md` with observe mode, fail-only gate, warn gate, and suppression cleanup.
-- [ ] Link both docs from `README.md`.
-- [ ] Run focused doc tests and confirm they pass.
+- [x] Add failing release-readiness tests for compatibility and CI rollout docs.
+- [x] Run focused doc tests and confirm failure because docs are missing.
+- [x] Create `docs/compatibility.md` describing stable CLI/config and evolving manifests.
+- [x] Create `docs/ci-rollout.md` with observe mode, fail-only gate, warn gate, and suppression cleanup.
+- [x] Link both docs from `README.md`.
+- [x] Run focused doc tests and confirm they pass.
 
 ## Task 5: Full Verification and Integration
 

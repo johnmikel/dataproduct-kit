@@ -30,4 +30,5 @@ KNOWN_FINDING_CODES = {
     "semantic.unknown_dataset",
     "semantic.unknown_dimension",
     "semantic.unknown_key",
+    "suppression.unused",
 }

@@ -5,6 +5,7 @@ from collections.abc import Iterable
 from pathlib import Path
 
 from dataproduct_kit.models import Finding, ValidationSuiteReport
+from dataproduct_kit.source_locations import manifest_for_code
 
 
 def render_text_suite(suite: ValidationSuiteReport) -> str:
@@ -51,11 +52,12 @@ def render_github_annotations(suite: ValidationSuiteReport) -> str:
             continue
         command = "error" if finding.level == "error" else "warning"
         file_uri = _finding_uri(product_path, finding.code)
-        properties = (
-            f"file={_escape_property(file_uri)},title={_escape_property(finding.code)}"
-        )
+        properties = [f"file={_escape_property(file_uri)}"]
+        if finding.line is not None:
+            properties.append(f"line={finding.line}")
+        properties.append(f"title={_escape_property(finding.code)}")
         message = _escape_message(finding.message)
-        lines.append(f"::{command} {properties}::{message}")
+        lines.append(f"::{command} {','.join(properties)}::{message}")
     if not lines:
         lines.append(f"dataproduct-kit: status {suite.status}")
     return "\n".join(lines) + "\n"
@@ -91,17 +93,20 @@ def render_sarif_report(suite: ValidationSuiteReport) -> dict:
 
 
 def _sarif_result(product_path: str, finding: Finding) -> dict:
+    physical_location = {
+        "artifactLocation": {
+            "uri": _finding_uri(product_path, finding.code),
+        }
+    }
+    if finding.line is not None:
+        physical_location["region"] = {"startLine": finding.line}
     result = {
         "ruleId": finding.code,
         "level": "error" if finding.level == "error" else "warning",
         "message": {"text": finding.message},
         "locations": [
             {
-                "physicalLocation": {
-                    "artifactLocation": {
-                        "uri": _finding_uri(product_path, finding.code),
-                    }
-                }
+                "physicalLocation": physical_location,
             }
         ],
     }
@@ -142,14 +147,7 @@ def _finding_uri(product_path: str, code: str) -> str:
 
 
 def _manifest_for_code(code: str) -> str:
-    prefix = code.split(".", 1)[0]
-    if prefix in {"contract", "schema", "quality"}:
-        return "contract.yaml"
-    if prefix == "semantic":
-        return "semantic.yaml"
-    if prefix == "policy":
-        return "policy.yaml"
-    return "dataproduct.yaml"
+    return manifest_for_code(code)
 
 
 def _escape_property(value: str) -> str:

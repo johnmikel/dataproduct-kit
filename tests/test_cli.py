@@ -109,6 +109,29 @@ def test_cli_validate_fail_on_warn_returns_nonzero_for_warning_project(tmp_path:
     assert "freshness.missing" in strict_result.output
 
 
+def test_cli_init_finance_revenue_template(tmp_path: Path) -> None:
+    from dataproduct_kit.cli import app
+
+    runner = CliRunner()
+    project_dir = tmp_path / "finance-demo"
+
+    init_result = runner.invoke(app, ["init", str(project_dir), "--template", "finance-revenue"])
+    assert init_result.exit_code == 0, init_result.output
+    assert (project_dir / "dataproduct.yaml").exists()
+    assert (project_dir / "data/transactions.csv").exists()
+
+    validate_result = runner.invoke(app, ["validate", str(project_dir)])
+    assert validate_result.exit_code == 0, validate_result.output
+    assert "status: pass" in validate_result.output
+
+    context_result = runner.invoke(
+        app,
+        ["context", str(project_dir), "--metric", "net_revenue", "--format", "json"],
+    )
+    assert context_result.exit_code == 0, context_result.output
+    assert json.loads(context_result.output)["metric"]["name"] == "net_revenue"
+
+
 def test_cli_schema_prints_single_schema_and_writes_all(tmp_path: Path) -> None:
     from dataproduct_kit.cli import app
 

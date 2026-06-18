@@ -88,10 +88,26 @@ def test_publish_workflow_uses_trusted_publishing() -> None:
     workflow = (ROOT / ".github/workflows/publish.yml").read_text(encoding="utf-8")
 
     assert "release:" in workflow
+    assert "workflow_dispatch:" in workflow
+    assert "target:" in workflow
+    assert "type: choice" in workflow
+    assert "- testpypi" in workflow
+    assert "- pypi" in workflow
     assert "id-token: write" in workflow
     assert "pypa/gh-action-pypi-publish@release/v1" in workflow
     assert "repository-url: https://test.pypi.org/legacy/" in workflow
     assert "environment:" in workflow
+
+
+def test_publish_workflow_can_dry_run_testpypi_without_pypi() -> None:
+    workflow = (ROOT / ".github/workflows/publish.yml").read_text(encoding="utf-8")
+
+    assert (
+        "if: ${{ github.event_name == 'release' || inputs.target == 'testpypi' "
+        "|| inputs.target == 'pypi' }}"
+    ) in workflow
+    assert "if: ${{ github.event_name == 'release' || inputs.target == 'pypi' }}" in workflow
+    assert "needs: publish-testpypi" in workflow
 
 
 def test_issue_templates_exist_for_public_contributors() -> None:
@@ -111,6 +127,8 @@ def test_trusted_publishing_docs_cover_setup_and_dry_run() -> None:
     assert "id-token: write" in docs
     assert "repository-url: https://test.pypi.org/legacy/" in docs
     assert "No PyPI API token" in docs
+    assert "workflow_dispatch" in docs
+    assert "target: testpypi" in docs
     assert "TestPyPI dry run" in docs
 
 
@@ -123,5 +141,6 @@ def test_release_checklist_documents_v040_cut_steps() -> None:
     assert "v0.4.0 - 2026-06-17" in docs
     assert "git tag -a v0.4.0" in docs
     assert "git push origin v0.4.0" in docs
+    assert "target: testpypi" in docs
     assert "GitHub Release" in docs
     assert ".github/workflows/publish.yml" in docs

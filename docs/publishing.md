@@ -4,8 +4,9 @@ This project is prepared for PyPI Trusted Publishing, but publishing is not
 automatic until the matching Trusted Publishers are configured in TestPyPI and
 PyPI.
 
-The release workflow is `.github/workflows/publish.yml`. It runs only when a
-GitHub Release is published.
+The release workflow is `.github/workflows/publish.yml`. It runs when a GitHub
+Release is published, and it can also be started manually with
+`workflow_dispatch` for a TestPyPI dry run.
 
 ## Trusted Publisher Setup
 
@@ -35,6 +36,23 @@ No PyPI API token should be added to repository secrets, committed to the repo,
 or passed to `pypa/gh-action-pypi-publish`. Trusted Publishing uses GitHub OIDC
 to mint short-lived upload credentials for the configured workflow identity.
 
+## Manual Targets
+
+The publish workflow has a manual target input:
+
+```yaml
+target: testpypi
+```
+
+Use `target: testpypi` to build the package and publish only to TestPyPI. The
+PyPI job is skipped for this manual target.
+
+Use `target: pypi` only when you intentionally want a manual production publish.
+That path runs TestPyPI first, then PyPI.
+
+A published GitHub Release still runs the full release path: build, publish to
+TestPyPI, then publish to PyPI.
+
 ## GitHub Environments
 
 Create both GitHub environments before the first real release:
@@ -52,11 +70,11 @@ Use this sequence before publishing to PyPI for the first time:
 
 1. Configure the `testpypi` Trusted Publisher in TestPyPI.
 2. Create the `testpypi` GitHub environment.
-3. Temporarily keep the `publish-pypi` job blocked by not configuring the `pypi`
-   Trusted Publisher yet.
-4. Create a GitHub Release for the candidate tag.
-5. Confirm the `publish-testpypi` job uploads `dataproduct-kit` to TestPyPI.
-6. Install from TestPyPI in a clean environment and run a smoke command:
+3. In GitHub Actions, run the `Publish` workflow manually with
+   `target: testpypi`.
+4. Confirm the `publish-testpypi` job uploads `dataproduct-kit` to TestPyPI and
+   the `publish-pypi` job is skipped.
+5. Install from TestPyPI in a clean environment and run a smoke command:
 
 ```bash
 python3 -m venv /tmp/dataproduct-kit-testpypi
@@ -67,8 +85,9 @@ python3 -m venv /tmp/dataproduct-kit-testpypi
 /tmp/dataproduct-kit-testpypi/bin/dataproduct-kit --help
 ```
 
-After the TestPyPI dry run succeeds, configure the `pypi` Trusted Publisher and
-approve the `pypi` environment deployment for the production publish.
+After the TestPyPI dry run succeeds, configure the `pypi` Trusted Publisher.
+The production publish should normally happen from the GitHub Release path, with
+the `pypi` environment approval providing the final manual gate.
 
 ## Troubleshooting
 

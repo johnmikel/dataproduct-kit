@@ -61,7 +61,22 @@ git tag -a v0.4.0 -m "v0.4.0"
 git push origin v0.4.0
 ```
 
-## 5. Create The GitHub Release
+## 5. Run The TestPyPI Dry Run
+
+Before creating the GitHub Release, run the `Publish` workflow manually with:
+
+```yaml
+target: testpypi
+```
+
+Confirm that:
+
+- The build job succeeds.
+- The `publish-testpypi` job succeeds.
+- The `publish-pypi` job is skipped.
+- A clean TestPyPI install can run `dataproduct-kit --help`.
+
+## 6. Create The GitHub Release
 
 Create a GitHub Release for tag `v0.4.0`.
 
@@ -94,7 +109,7 @@ Publishing the GitHub Release starts `.github/workflows/publish.yml`. That
 workflow builds the package, publishes to TestPyPI using the `testpypi`
 environment, then publishes to PyPI using the `pypi` environment.
 
-## 6. Post-Release Checks
+## 7. Post-Release Checks
 
 After the workflow completes:
 

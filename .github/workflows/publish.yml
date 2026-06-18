@@ -3,9 +3,20 @@ name: Publish
 on:
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Publish target for a manual run.
+        required: true
+        default: testpypi
+        type: choice
+        options:
+          - testpypi
+          - pypi
 
 jobs:
   build:
+    if: ${{ github.event_name == 'release' || inputs.target == 'testpypi' || inputs.target == 'pypi' }}
     runs-on: ubuntu-latest
 
     steps:
@@ -32,6 +43,7 @@ jobs:
           path: dist/*
 
   publish-testpypi:
+    if: ${{ github.event_name == 'release' || inputs.target == 'testpypi' || inputs.target == 'pypi' }}
     needs: build
     runs-on: ubuntu-latest
     environment: testpypi
@@ -52,6 +64,7 @@ jobs:
           skip-existing: true
 
   publish-pypi:
+    if: ${{ github.event_name == 'release' || inputs.target == 'pypi' }}
     needs: publish-testpypi
     runs-on: ubuntu-latest
     environment: pypi

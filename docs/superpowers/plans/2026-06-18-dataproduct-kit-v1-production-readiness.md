@@ -721,7 +721,7 @@ git commit -m "feat: enforce agent context policy"
 - Create: `tests/test_csv_scaffold.py`
 - Modify: `tests/test_cli.py`
 
-- [ ] **Step 1: Write failing unit test for CSV scaffold**
+- [x] **Step 1: Write failing unit test for CSV scaffold**
 
 Create `tests/test_csv_scaffold.py`:
 
@@ -760,7 +760,7 @@ def test_scaffold_from_csv_writes_starter_manifests(tmp_path: Path) -> None:
     assert "TODO" in policy["access_notes"]
 ```
 
-- [ ] **Step 2: Write failing CLI test**
+- [x] **Step 2: Write failing CLI test**
 
 Add to `tests/test_cli.py`:
 
@@ -780,7 +780,7 @@ def test_cli_init_from_csv_generates_project(tmp_path: Path) -> None:
     assert (out / "data/customers.csv").exists()
 ```
 
-- [ ] **Step 3: Run tests and verify they fail**
+- [x] **Step 3: Run tests and verify they fail**
 
 Run:
 
@@ -790,7 +790,7 @@ Run:
 
 Expected: fail because `csv_scaffold` and `init from-csv` do not exist.
 
-- [ ] **Step 4: Implement CSV inference and manifest writing**
+- [x] **Step 4: Implement CSV inference and manifest writing**
 
 Create `src/dataproduct_kit/csv_scaffold.py`:
 
@@ -854,7 +854,7 @@ def _contract_payload(dataset_id: str, columns: list[str], rows: list[dict[str, 
 Use simple type inference only: boolean, integer, number, timestamp, string.
 Avoid clever PII decisions; mark classifications as `TODO`.
 
-- [ ] **Step 5: Update Typer init command shape**
+- [x] **Step 5: Update Typer init command shape**
 
 Current `init` command takes `path` and `--template`. To support subcommands
 without breaking the existing demo path, convert `init` into a Typer group:
@@ -877,7 +877,7 @@ init <path> --template saas-churn` only if Typer supports it cleanly without
 complex command hacks. If not, update docs and tests to the new `init demo`
 shape in the same task.
 
-- [ ] **Step 6: Run CSV scaffold tests**
+- [x] **Step 6: Run CSV scaffold tests**
 
 Run:
 
@@ -887,7 +887,7 @@ Run:
 
 Expected: pass.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/dataproduct_kit/csv_scaffold.py src/dataproduct_kit/templates.py src/dataproduct_kit/cli.py tests/test_csv_scaffold.py tests/test_cli.py

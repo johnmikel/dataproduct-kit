@@ -19,6 +19,8 @@ SENSITIVE_CLASSIFICATIONS = {
     "personally_identifying",
 }
 
+PLACEHOLDER_CLASSIFICATIONS = {"todo", "unknown"}
+
 
 def profile_findings(
     project: DataProductProject,
@@ -115,7 +117,9 @@ def _regulated_findings(project: DataProductProject, report: TrustReport) -> lis
 
     findings: list[Finding] = []
     missing_classification = sorted(
-        field.name for field in project.contract.schema if not field.classification
+        field.name
+        for field in project.contract.schema
+        if _is_missing_classification(field.classification)
     )
     if missing_classification:
         findings.append(
@@ -129,3 +133,8 @@ def _regulated_findings(project: DataProductProject, report: TrustReport) -> lis
             )
         )
     return findings
+
+
+def _is_missing_classification(classification: str | None) -> bool:
+    normalized = (classification or "").strip().lower()
+    return not normalized or normalized in PLACEHOLDER_CLASSIFICATIONS

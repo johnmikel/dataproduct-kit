@@ -131,6 +131,27 @@ def test_regulated_blocks_unused_suppression_warning_without_products(
     assert _finding(suite.findings, "profile.unsuppressed_warning").level == "error"
 
 
+def test_regulated_treats_placeholder_classifications_as_missing(tmp_path: Path) -> None:
+    from dataproduct_kit.suite import validate_suite
+
+    project_dir = tmp_path / "products/customers"
+    write_valid_project(project_dir)
+    contract = (project_dir / "contract.yaml").read_text(encoding="utf-8")
+    for classification in ["internal", "public", "confidential"]:
+        contract = contract.replace(
+            f"classification: {classification}",
+            "classification: TODO",
+        )
+    (project_dir / "contract.yaml").write_text(contract, encoding="utf-8")
+
+    suite = validate_suite(tmp_path, profile_override="regulated")
+
+    assert suite.status == "fail"
+    finding = _finding(suite.products[0].findings, "profile.classification_missing")
+    assert finding.level == "error"
+    assert "customer_id" in finding.message
+
+
 def test_agent_constraints_profile_finding_maps_to_policy_yaml(tmp_path: Path) -> None:
     from dataproduct_kit.ci import render_github_annotations
     from dataproduct_kit.suite import validate_suite

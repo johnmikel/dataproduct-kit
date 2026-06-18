@@ -18,6 +18,8 @@ def scaffold_from_csv(csv_path: Path, out: Path) -> None:
     if not csv_path.exists():
         raise ValueError(f"CSV file not found: {csv_path}")
     columns, rows, has_header = _sample_rows(csv_path)
+    if _has_duplicate_headers(columns):
+        raise ValueError(f"CSV file has duplicate header names: {csv_path}")
     if not _has_header(columns, rows, has_header):
         raise ValueError(f"CSV file has no header row: {csv_path}")
     dataset_id = _safe_name(csv_path.stem)
@@ -125,6 +127,11 @@ def _has_header(
     if not all(_is_header_name(column) for column in normalized):
         return False
     return has_header or _has_sample_type_contrast(normalized, rows)
+
+
+def _has_duplicate_headers(columns: list[str]) -> bool:
+    normalized = [column.strip().lower() for column in columns]
+    return len(normalized) != len(set(normalized))
 
 
 def _sniffer_has_header(sample: str) -> bool:

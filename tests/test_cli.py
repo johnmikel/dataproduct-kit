@@ -149,6 +149,18 @@ def test_cli_validate_fail_on_warn_returns_nonzero_for_warning_project(tmp_path:
     assert "freshness.missing" in strict_result.output
 
 
+def test_cli_doctor_outputs_next_steps(tmp_path: Path) -> None:
+    from dataproduct_kit.cli import app
+
+    runner = CliRunner()
+    write_valid_project(tmp_path)
+
+    result = runner.invoke(app, ["doctor", str(tmp_path)])
+
+    assert result.exit_code == 0, result.output
+    assert "production readiness" in result.output
+
+
 def test_cli_schema_prints_single_schema_and_writes_all(tmp_path: Path) -> None:
     from dataproduct_kit.cli import app
 

@@ -14,6 +14,7 @@ from dataproduct_kit.ci import (
 )
 from dataproduct_kit.context import build_agent_context
 from dataproduct_kit.csv_scaffold import scaffold_from_csv
+from dataproduct_kit.doctor import inspect_project
 from dataproduct_kit.loader import ManifestLoadError, load_project
 from dataproduct_kit.profiles import ReadinessProfile
 from dataproduct_kit.reports import render_json_report, render_markdown_report
@@ -117,6 +118,32 @@ def ci(
         typer.echo(render_text_suite(suite), nl=False)
     if _should_fail(suite.status, effective_fail_on):
         raise typer.Exit(1)
+
+
+@app.command()
+def doctor(
+    path: Annotated[Path, typer.Argument(help="Data product directory.")],
+    profile: Annotated[
+        ReadinessProfile,
+        typer.Option("--profile", help="Readiness profile to inspect."),
+    ] = "production",
+    format: Annotated[
+        Literal["text", "json"],
+        typer.Option("--format", help="Output format."),
+    ] = "text",
+) -> None:
+    """Inspect production readiness and print practical next steps."""
+    try:
+        payload = inspect_project(path, profile)
+    except ManifestLoadError as error:
+        typer.echo(str(error), err=True)
+        raise typer.Exit(1) from error
+    if format == "json":
+        typer.echo(json.dumps(payload, indent=2, sort_keys=True) + "\n", nl=False)
+        return
+    typer.echo(f"production readiness: {payload['status']} ({payload['profile']})")
+    for item in payload["next_steps"]:
+        typer.echo(f"- {item}")
 
 
 @app.command()

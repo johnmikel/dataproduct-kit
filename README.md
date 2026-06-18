@@ -15,11 +15,14 @@ freshness context, lineage, and policy constraints.
 
 `dataproduct-kit` makes that trust context explicit and testable in a local repo.
 
-## Quickstart
+## Quickstart after release
+
+For local branch testing before a public release, use the editable install in
+[Develop locally](#develop-locally).
 
 ```bash
 pipx install dataproduct-kit
-dataproduct-kit init demo --template saas-churn
+dataproduct-kit init demo demo --template saas-churn
 dataproduct-kit ci demo --profile starter
 dataproduct-kit report demo --format markdown
 dataproduct-kit context demo --metric churn_rate --format json
@@ -47,7 +50,7 @@ python3 -m venv .venv
 ## Try the SaaS churn demo
 
 ```bash
-dataproduct-kit init demo --template saas-churn
+dataproduct-kit init demo demo --template saas-churn
 dataproduct-kit ci demo --profile starter
 dataproduct-kit report demo --format markdown
 dataproduct-kit context demo --metric churn_rate --format json

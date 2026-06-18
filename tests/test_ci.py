@@ -132,6 +132,23 @@ def test_cli_ci_outputs_json_github_annotations_and_sarif(tmp_path: Path) -> Non
     )
 
 
+def test_cli_ci_accepts_profile_override(tmp_path: Path) -> None:
+    from dataproduct_kit.cli import app
+
+    runner = CliRunner()
+    write_valid_project(tmp_path / "products/pass")
+
+    result = runner.invoke(
+        app,
+        ["ci", str(tmp_path), "--profile", "production", "--format", "json"],
+    )
+
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.output)
+    assert payload["profile"] == "production"
+    assert payload["config"]["profile"] == "production"
+
+
 def test_cli_ci_fail_on_warn_exits_nonzero_for_warning_suite(tmp_path: Path) -> None:
     from dataproduct_kit.cli import app
 

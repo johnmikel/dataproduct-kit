@@ -176,6 +176,7 @@ class SuiteProductReport(BaseModel):
 class ValidationSuiteReport(BaseModel):
     status: Literal["pass", "warn", "fail"]
     summary: dict[str, int]
+    profile: str = "starter"
     config: dict[str, Any] = Field(default_factory=dict)
     findings: list[Finding] = Field(default_factory=list)
     products: list[SuiteProductReport] = Field(default_factory=list)

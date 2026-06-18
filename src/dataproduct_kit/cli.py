@@ -14,6 +14,7 @@ from dataproduct_kit.ci import (
 )
 from dataproduct_kit.context import build_agent_context
 from dataproduct_kit.loader import ManifestLoadError, load_project
+from dataproduct_kit.profiles import ReadinessProfile
 from dataproduct_kit.reports import render_json_report, render_markdown_report
 from dataproduct_kit.schemas import build_all_schemas, build_schema, write_schema_files
 from dataproduct_kit.standards import emit_openlineage, export_odcs, export_osi
@@ -78,9 +79,13 @@ def ci(
         Path | None,
         typer.Option("--sarif", help="Write SARIF report to this file."),
     ] = None,
+    profile: Annotated[
+        ReadinessProfile | None,
+        typer.Option("--profile", help="Readiness profile to apply."),
+    ] = None,
 ) -> None:
     """Validate every data product under a repo and emit CI-friendly output."""
-    suite = validate_suite(path)
+    suite = validate_suite(path, profile_override=profile)
     effective_fail_on = fail_on or str(suite.config.get("fail_on", "fail"))
     if effective_fail_on not in {"fail", "warn"}:
         typer.echo("--fail-on must be one of: fail, warn", err=True)

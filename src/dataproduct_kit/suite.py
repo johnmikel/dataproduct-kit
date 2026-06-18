@@ -8,6 +8,7 @@ from dataproduct_kit.config import ConfigLoadError, KitConfig, SuppressionConfig
 from dataproduct_kit.finding_codes import KNOWN_FINDING_CODES
 from dataproduct_kit.loader import ManifestLoadError, load_project
 from dataproduct_kit.models import Finding, SuiteProductReport, ValidationSuiteReport
+from dataproduct_kit.profiles import DEFAULT_PROFILE
 from dataproduct_kit.source_locations import with_config_source_lines, with_product_source_lines
 from dataproduct_kit.validators import validate_project
 
@@ -27,7 +28,7 @@ def discover_project_dirs(root: Path, config: KitConfig | None = None) -> list[P
     return sorted(filtered, key=lambda path: _relative_path(path, root))
 
 
-def validate_suite(root: Path) -> ValidationSuiteReport:
+def validate_suite(root: Path, profile_override: str | None = None) -> ValidationSuiteReport:
     """Validate every data product discovered below root."""
     root = root.resolve()
     try:
@@ -44,9 +45,19 @@ def validate_suite(root: Path) -> ValidationSuiteReport:
                 "findings_total": 1,
                 "findings_suppressed": 0,
             },
-            config={"fail_on": "fail", "include": ["**"], "exclude": []},
+            profile=DEFAULT_PROFILE,
+            config={
+                "fail_on": "fail",
+                "include": ["**"],
+                "exclude": [],
+                "profile": DEFAULT_PROFILE,
+            },
             findings=[finding],
             products=[],
+        )
+    if profile_override is not None:
+        config = config.model_copy(
+            update={"ci": config.ci.model_copy(update={"profile": profile_override})}
         )
     config_findings = with_config_source_lines(root, _validate_suppressions(config))
     product_dirs = discover_project_dirs(root, config)
@@ -71,6 +82,7 @@ def validate_suite(root: Path) -> ValidationSuiteReport:
                 "findings_total": len(findings),
                 "findings_suppressed": 0,
             },
+            profile=config.ci.profile,
             config=_config_summary(config),
             findings=findings,
             products=[],
@@ -112,6 +124,7 @@ def validate_suite(root: Path) -> ValidationSuiteReport:
             "findings_total": findings_total,
             "findings_suppressed": findings_suppressed,
         },
+        profile=config.ci.profile,
         config=_config_summary(config),
         findings=config_findings,
         products=products,
@@ -281,6 +294,7 @@ def _config_summary(config: KitConfig) -> dict:
         "include": config.ci.include,
         "exclude": config.ci.exclude,
         "fail_on": config.ci.fail_on,
+        "profile": config.ci.profile,
         "suppressions": len(config.suppressions),
     }
 

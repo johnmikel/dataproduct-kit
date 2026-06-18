@@ -105,6 +105,19 @@ def test_scaffold_from_csv_data_only_file_raises_no_header_error(tmp_path: Path)
     assert str(error.value) == f"CSV file has no header row: {csv_path}"
 
 
+def test_scaffold_from_csv_string_data_only_file_raises_no_header_error(
+    tmp_path: Path,
+) -> None:
+    from dataproduct_kit.csv_scaffold import scaffold_from_csv
+
+    csv_path = tmp_path / "customers.csv"
+    csv_path.write_text("cust_001,a@example.com\ncust_002,b@example.com\n", encoding="utf-8")
+
+    with pytest.raises(ValueError) as error:
+        scaffold_from_csv(csv_path, tmp_path / "out")
+    assert str(error.value) == f"CSV file has no header row: {csv_path}"
+
+
 def test_scaffold_from_csv_infers_types_from_first_25_rows(tmp_path: Path) -> None:
     from dataproduct_kit.csv_scaffold import scaffold_from_csv
 

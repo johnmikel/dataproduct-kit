@@ -10,12 +10,15 @@ from typing import Any
 
 import yaml
 
+HEADER_SAMPLE_SIZE = 8192
+HEADER_NAME_PATTERN = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+
 
 def scaffold_from_csv(csv_path: Path, out: Path) -> None:
     if not csv_path.exists():
         raise ValueError(f"CSV file not found: {csv_path}")
-    columns, rows = _sample_rows(csv_path)
-    if not _has_header(columns):
+    columns, rows, has_header = _sample_rows(csv_path)
+    if not _has_header(columns, rows, has_header):
         raise ValueError(f"CSV file has no header row: {csv_path}")
     dataset_id = _safe_name(csv_path.stem)
     out.mkdir(parents=True, exist_ok=True)
@@ -29,11 +32,13 @@ def scaffold_from_csv(csv_path: Path, out: Path) -> None:
     _write_yaml(out / "policy.yaml", _policy_payload())
 
 
-def _sample_rows(csv_path: Path) -> tuple[list[str], list[dict[str, str]]]:
+def _sample_rows(csv_path: Path) -> tuple[list[str], list[dict[str, str]], bool]:
     with csv_path.open(newline="", encoding="utf-8") as handle:
+        sample = handle.read(HEADER_SAMPLE_SIZE)
+        handle.seek(0)
         reader = csv.DictReader(handle)
         columns = list(reader.fieldnames or [])
-        return columns, list(islice(reader, 25))
+        return columns, list(islice(reader, 25)), _sniffer_has_header(sample)
 
 
 def _product_payload(dataset_id: str, target_csv: Path) -> dict[str, Any]:
@@ -107,11 +112,36 @@ def _infer_type(values: list[str | None]) -> str:
     return "string"
 
 
-def _has_header(columns: list[str]) -> bool:
+def _has_header(
+    columns: list[str],
+    rows: list[dict[str, str]],
+    has_header: bool,
+) -> bool:
     normalized = [column.strip() for column in columns]
     if not normalized or any(not column for column in normalized):
         return False
-    return not all(_is_primitive_value(column) for column in normalized)
+    if all(_is_primitive_value(column) for column in normalized):
+        return False
+    if not all(_is_header_name(column) for column in normalized):
+        return False
+    return has_header or _has_sample_type_contrast(normalized, rows)
+
+
+def _sniffer_has_header(sample: str) -> bool:
+    if not sample.strip():
+        return False
+    try:
+        return csv.Sniffer().has_header(sample)
+    except csv.Error:
+        return False
+
+
+def _is_header_name(value: str) -> bool:
+    return HEADER_NAME_PATTERN.fullmatch(value) is not None
+
+
+def _has_sample_type_contrast(columns: list[str], rows: list[dict[str, str]]) -> bool:
+    return any(_infer_type([row.get(column, "") for row in rows]) != "string" for column in columns)
 
 
 def _is_primitive_value(value: str) -> bool:

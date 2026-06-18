@@ -103,12 +103,7 @@ def validate_suite(root: Path, profile_override: str | None = None) -> Validatio
     )
     config_findings = [*config_findings, *unused_findings]
     if config.ci.profile == "regulated":
-        unsuppressed_warnings = [
-            finding
-            for product in products
-            for finding in product.findings
-            if finding.level == "warning" and not finding.suppressed
-        ]
+        unsuppressed_warnings = _unsuppressed_regulated_warnings(products, config_findings)
         if unsuppressed_warnings:
             config_findings.extend(
                 with_config_source_lines(
@@ -153,6 +148,28 @@ def validate_suite(root: Path, profile_override: str | None = None) -> Validatio
         findings=config_findings,
         products=products,
     )
+
+
+def _unsuppressed_regulated_warnings(
+    products: list[SuiteProductReport],
+    config_findings: list[Finding],
+) -> list[Finding]:
+    warnings = [
+        finding for finding in config_findings if _is_regulated_blocking_warning(finding)
+    ]
+    warnings.extend(
+        finding
+        for product in products
+        for finding in product.findings
+        if _is_regulated_blocking_warning(finding)
+    )
+    return warnings
+
+
+def _is_regulated_blocking_warning(finding: Finding) -> bool:
+    if finding.code == "profile.unsuppressed_warning":
+        return False
+    return finding.level == "warning" and not finding.suppressed
 
 
 def _validate_product(

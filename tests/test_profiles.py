@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from conftest import write_valid_project
+from conftest import write_text, write_valid_project
 
 
 def test_starter_warns_for_missing_agent_constraints(tmp_path: Path) -> None:
@@ -79,6 +79,32 @@ def test_regulated_blocks_unsuppressed_warnings(tmp_path: Path) -> None:
 
     assert suite.status == "fail"
     assert any(finding.code == "profile.unsuppressed_warning" for finding in suite.findings)
+
+
+def test_regulated_blocks_unused_suppression_warning(tmp_path: Path) -> None:
+    from dataproduct_kit.suite import validate_suite
+
+    write_valid_project(tmp_path / "products/pass")
+    write_text(
+        tmp_path / "dataproduct-kit.toml",
+        """
+        [[suppressions]]
+        code = "schema.missing_column"
+        path = "products/pass"
+        reason = "This migration has already landed and the suppression should be removed."
+        expires = "2999-01-01"
+        """,
+    )
+
+    suite = validate_suite(tmp_path, profile_override="regulated")
+
+    assert suite.status == "fail"
+    unused = _finding(suite.findings, "suppression.unused")
+    blocker = _finding(suite.findings, "profile.unsuppressed_warning")
+    assert unused.level == "warning"
+    assert unused.line is not None
+    assert blocker.level == "error"
+    assert blocker.line is not None
 
 
 def test_agent_constraints_profile_finding_maps_to_policy_yaml(tmp_path: Path) -> None:

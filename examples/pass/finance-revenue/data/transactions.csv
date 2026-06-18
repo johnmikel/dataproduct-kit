@@ -1,0 +1,9 @@
+transaction_id,customer_id,invoice_id,amount,currency,product_category,region,transaction_date,updated_at
+txn_001,cust_a,inv_101,1500.00,USD,software,NA,2026-06-01,2026-06-16T08:00:00Z
+txn_002,cust_b,inv_102,2750.00,USD,consulting,EMEA,2026-06-02,2026-06-16T08:30:00Z
+txn_003,cust_a,inv_103,950.00,EUR,software,NA,2026-06-05,2026-06-16T09:00:00Z
+txn_004,cust_c,inv_104,5000.00,USD,subscription,APAC,2026-06-07,2026-06-16T09:30:00Z
+txn_005,cust_d,inv_105,3200.00,GBP,consulting,EMEA,2026-06-10,2026-06-16T10:00:00Z
+txn_006,cust_b,inv_106,1800.00,EUR,software,EMEA,2026-06-12,2026-06-16T10:30:00Z
+txn_007,cust_e,inv_107,4200.00,USD,subscription,NA,2026-06-14,2026-06-16T11:00:00Z
+txn_008,cust_f,inv_108,1100.00,USD,software,LATAM,2026-06-15,2026-06-16T11:30:00Z

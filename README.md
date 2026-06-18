@@ -180,6 +180,7 @@ The validator returns `fail` for issues such as:
 Runnable examples live under `examples/`:
 
 - `examples/pass/saas-churn`
+- `examples/pass/finance-revenue`
 - `examples/fail/schema-drift`
 - `examples/fail/stale-data`
 - `examples/fail/broken-metric`

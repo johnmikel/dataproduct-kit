@@ -1,0 +1,18 @@
+id: finance_revenue
+name: Finance Revenue Data Product
+domain: finance
+version: "1.0.0"
+description: Trusted net revenue metric for financial reporting and forecasting.
+owner:
+  name: Finance Analytics
+  email: finance-analytics@example.com
+  team: Finance
+datasets:
+  - id: transactions
+    path: data/transactions.csv
+    format: csv
+    table: transactions
+    freshness:
+      column: updated_at
+      max_age_hours: 48
+      reference_time: "2026-06-17T00:00:00Z"

@@ -66,3 +66,22 @@ called out in the changelog.
 - `policy.access_notes`: `policy.yaml` has blank access notes.
 - `policy.unknown_sensitive_field`: a sensitive field is not declared in the
   contract.
+
+## Readiness Profiles
+
+- `profile.agent_constraints_missing`: the selected profile requires
+  agent-specific usage constraints in `policy.yaml`.
+- `profile.agent_purpose_missing`: the `production` or `regulated` profile
+  requires `agent_context` in `allowed_purposes`.
+- `profile.allowed_purposes_missing`: the `production` or `regulated` profile
+  requires at least one allowed purpose.
+- `profile.classification_missing`: the `regulated` profile requires every
+  contract field to have a classification.
+- `profile.quality_checks_missing`: the selected profile requires at least one
+  contract quality check.
+- `profile.semantic_metrics_missing`: the selected profile requires at least one
+  semantic metric.
+- `profile.sensitive_fields_missing`: the `production` or `regulated` profile
+  requires fields classified as sensitive to appear in `sensitive_fields`.
+- `profile.unsuppressed_warning`: the `regulated` profile does not allow
+  unsuppressed warnings.

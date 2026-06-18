@@ -265,7 +265,7 @@ git commit -m "feat: add readiness profile plumbing"
 - Create/modify: `tests/test_profiles.py`
 - Modify: `tests/conftest.py` if helper fixtures are useful
 
-- [ ] **Step 1: Write failing tests for starter warnings**
+- [x] **Step 1: Write failing tests for starter warnings**
 
 In `tests/test_profiles.py`:
 
@@ -304,7 +304,7 @@ def test_starter_warns_for_missing_agent_constraints(tmp_path: Path) -> None:
     )
 ```
 
-- [ ] **Step 2: Write failing tests for production blockers**
+- [x] **Step 2: Write failing tests for production blockers**
 
 Add:
 
@@ -335,7 +335,7 @@ def test_production_blocks_missing_agent_constraints(tmp_path: Path) -> None:
     )
 ```
 
-- [ ] **Step 3: Write failing tests for regulated warning policy**
+- [x] **Step 3: Write failing tests for regulated warning policy**
 
 Add:
 
@@ -363,7 +363,7 @@ def test_regulated_blocks_unsuppressed_warnings(tmp_path: Path) -> None:
     assert any(finding.code == "profile.unsuppressed_warning" for finding in suite.findings)
 ```
 
-- [ ] **Step 4: Run tests and verify they fail**
+- [x] **Step 4: Run tests and verify they fail**
 
 Run:
 
@@ -373,7 +373,7 @@ Run:
 
 Expected: fail because profile findings are not implemented.
 
-- [ ] **Step 5: Implement profile rule function**
+- [x] **Step 5: Implement profile rule function**
 
 Add to `src/dataproduct_kit/profiles.py`:
 
@@ -505,7 +505,7 @@ def _regulated_findings(project: DataProductProject, report: TrustReport) -> lis
     return findings
 ```
 
-- [ ] **Step 6: Apply profile findings in suite validation**
+- [x] **Step 6: Apply profile findings in suite validation**
 
 In `src/dataproduct_kit/suite.py`, import and call `profile_findings` inside
 `_validate_product`. Update its signature:
@@ -534,7 +534,7 @@ Return a `SuiteProductReport` using `findings` and `status`. If keeping
 trust_report=report.model_copy(update={"status": status, "findings": findings, "summary": summary})
 ```
 
-- [ ] **Step 7: Add regulated suite-level warning blocker**
+- [x] **Step 7: Add regulated suite-level warning blocker**
 
 After suppressions are applied and before computing final `status`, if profile is
 `regulated`, add suite-level `Finding` for any unsuppressed warning:
@@ -557,7 +557,7 @@ if config.ci.profile == "regulated":
         )
 ```
 
-- [ ] **Step 8: Update known finding codes**
+- [x] **Step 8: Update known finding codes**
 
 Add to `src/dataproduct_kit/finding_codes.py`:
 
@@ -572,7 +572,7 @@ Add to `src/dataproduct_kit/finding_codes.py`:
 "profile.unsuppressed_warning",
 ```
 
-- [ ] **Step 9: Run profile tests**
+- [x] **Step 9: Run profile tests**
 
 Run:
 
@@ -582,7 +582,7 @@ Run:
 
 Expected: pass.
 
-- [ ] **Step 10: Commit**
+- [x] **Step 10: Commit**
 
 ```bash
 git add src/dataproduct_kit/profiles.py src/dataproduct_kit/suite.py src/dataproduct_kit/finding_codes.py tests/test_profiles.py tests/test_ci.py tests/test_validation.py

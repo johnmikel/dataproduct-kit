@@ -10,6 +10,8 @@ _QUOTED_TOKEN = re.compile(r"'([^']+)'")
 
 
 def manifest_for_code(code: str) -> str:
+    if code.startswith("profile."):
+        return _profile_manifest_for_code(code)
     prefix = code.split(".", 1)[0]
     if prefix in {"config", "suppression"}:
         return CONFIG_FILENAME
@@ -19,6 +21,21 @@ def manifest_for_code(code: str) -> str:
         return "semantic.yaml"
     if prefix == "policy":
         return "policy.yaml"
+    return "dataproduct.yaml"
+
+
+def _profile_manifest_for_code(code: str) -> str:
+    if code in {
+        "profile.agent_constraints_missing",
+        "profile.agent_purpose_missing",
+        "profile.allowed_purposes_missing",
+        "profile.sensitive_fields_missing",
+    }:
+        return "policy.yaml"
+    if code in {"profile.classification_missing", "profile.quality_checks_missing"}:
+        return "contract.yaml"
+    if code == "profile.semantic_metrics_missing":
+        return "semantic.yaml"
     return "dataproduct.yaml"
 
 

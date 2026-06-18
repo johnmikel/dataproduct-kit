@@ -13,7 +13,10 @@ def test_cli_init_validate_report_context_export_and_emit(tmp_path: Path) -> Non
     runner = CliRunner()
     project_dir = tmp_path / "demo"
 
-    init_result = runner.invoke(app, ["init", str(project_dir), "--template", "saas-churn"])
+    init_result = runner.invoke(
+        app,
+        ["init", "demo", str(project_dir), "--template", "saas-churn"],
+    )
     assert init_result.exit_code == 0, init_result.output
     assert (project_dir / "dataproduct.yaml").exists()
     assert (project_dir / "data/subscriptions.csv").exists()
@@ -66,6 +69,21 @@ def test_cli_validate_returns_nonzero_for_failed_project(tmp_path: Path) -> None
     assert result.exit_code == 1
     assert "status: fail" in result.output
     assert "quality.not_null" in result.output
+
+
+def test_cli_init_from_csv_generates_project(tmp_path: Path) -> None:
+    from dataproduct_kit.cli import app
+
+    runner = CliRunner()
+    csv_path = tmp_path / "customers.csv"
+    csv_path.write_text("customer_id,created_at\ncust_001,2026-06-01T00:00:00Z\n")
+    out = tmp_path / "customers-product"
+
+    result = runner.invoke(app, ["init", "from-csv", str(csv_path), "--out", str(out)])
+
+    assert result.exit_code == 0, result.output
+    assert (out / "dataproduct.yaml").exists()
+    assert (out / "data/customers.csv").exists()
 
 
 def test_cli_validate_json_returns_machine_readable_report(tmp_path: Path) -> None:

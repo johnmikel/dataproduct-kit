@@ -36,6 +36,20 @@ def test_config_rejects_unknown_ci_profile(tmp_path: Path) -> None:
     assert "ci.profile" in str(error.value)
 
 
+def test_validate_suite_rejects_unknown_profile_override(tmp_path: Path) -> None:
+    from dataproduct_kit.suite import validate_suite
+
+    write_valid_project(tmp_path / "data-products/pass")
+
+    suite = validate_suite(tmp_path, profile_override="not-real")
+
+    assert suite.status == "fail"
+    assert suite.profile == "starter"
+    assert suite.config["profile"] == "starter"
+    assert suite.findings[0].code == "config.invalid"
+    assert "ci.profile" in suite.findings[0].message
+
+
 def test_ci_config_filters_discovered_products(tmp_path: Path) -> None:
     from dataproduct_kit.suite import validate_suite
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 import tomllib
 from datetime import date
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import Field, ValidationError, field_validator
 
@@ -52,6 +52,18 @@ def load_config(root: Path) -> KitConfig:
         payload = tomllib.loads(config_path.read_text(encoding="utf-8"))
     except tomllib.TOMLDecodeError as error:
         raise ConfigLoadError(f"{CONFIG_FILENAME}: TOML parse error: {error}") from error
+    return _validate_config_payload(payload)
+
+
+def apply_profile_override(config: KitConfig, profile: str) -> KitConfig:
+    payload = config.model_dump(mode="python")
+    ci = dict(payload["ci"])
+    ci["profile"] = profile
+    payload["ci"] = ci
+    return _validate_config_payload(payload)
+
+
+def _validate_config_payload(payload: dict[str, Any]) -> KitConfig:
     try:
         return KitConfig.model_validate(payload)
     except ValidationError as error:

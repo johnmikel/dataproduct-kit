@@ -4,7 +4,13 @@ from datetime import date
 from fnmatch import fnmatchcase
 from pathlib import Path
 
-from dataproduct_kit.config import ConfigLoadError, KitConfig, SuppressionConfig, load_config
+from dataproduct_kit.config import (
+    ConfigLoadError,
+    KitConfig,
+    SuppressionConfig,
+    apply_profile_override,
+    load_config,
+)
 from dataproduct_kit.finding_codes import KNOWN_FINDING_CODES
 from dataproduct_kit.loader import ManifestLoadError, load_project
 from dataproduct_kit.models import Finding, SuiteProductReport, ValidationSuiteReport
@@ -33,6 +39,8 @@ def validate_suite(root: Path, profile_override: str | None = None) -> Validatio
     root = root.resolve()
     try:
         config = load_config(root)
+        if profile_override is not None:
+            config = apply_profile_override(config, profile_override)
     except ConfigLoadError as error:
         finding = Finding(level="error", code="config.invalid", message=str(error))
         return ValidationSuiteReport(
@@ -54,10 +62,6 @@ def validate_suite(root: Path, profile_override: str | None = None) -> Validatio
             },
             findings=[finding],
             products=[],
-        )
-    if profile_override is not None:
-        config = config.model_copy(
-            update={"ci": config.ci.model_copy(update={"profile": profile_override})}
         )
     config_findings = with_config_source_lines(root, _validate_suppressions(config))
     product_dirs = discover_project_dirs(root, config)

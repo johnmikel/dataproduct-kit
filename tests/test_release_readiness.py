@@ -65,6 +65,7 @@ def test_compatibility_and_ci_rollout_docs_are_present() -> None:
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     compatibility = (ROOT / "docs/compatibility.md").read_text(encoding="utf-8")
     rollout = (ROOT / "docs/ci-rollout.md").read_text(encoding="utf-8")
+    json_output = (ROOT / "docs/json-output.md").read_text(encoding="utf-8")
 
     assert "docs/compatibility.md" in readme
     assert "docs/ci-rollout.md" in readme
@@ -75,6 +76,8 @@ def test_compatibility_and_ci_rollout_docs_are_present() -> None:
     assert "fail-only gate" in rollout
     assert "warn gate" in rollout
     assert "suppression cleanup" in rollout
+    assert "JSON Output Compatibility" in json_output
+    assert "products[*].trust_report.policy" in json_output
 
 
 def test_ci_workflow_uses_node24_action_versions() -> None:

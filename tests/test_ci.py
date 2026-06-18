@@ -149,6 +149,25 @@ def test_cli_ci_accepts_profile_override(tmp_path: Path) -> None:
     assert payload["config"]["profile"] == "production"
 
 
+def test_ci_json_contains_stable_core_fields(tmp_path: Path) -> None:
+    from dataproduct_kit.cli import app
+
+    runner = CliRunner()
+    write_valid_project(tmp_path / "products/pass")
+
+    result = runner.invoke(
+        app,
+        ["ci", str(tmp_path), "--profile", "production", "--format", "json"],
+    )
+
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.output)
+    for field in ["status", "summary", "findings", "products", "profile", "config"]:
+        assert field in payload
+    assert payload["profile"] == "production"
+    assert "policy" in payload["products"][0]["trust_report"]
+
+
 def test_cli_ci_fail_on_warn_exits_nonzero_for_warning_suite(tmp_path: Path) -> None:
     from dataproduct_kit.cli import app
 
@@ -181,10 +200,12 @@ def test_action_metadata_runs_ci_command() -> None:
     assert action["runs"]["using"] == "composite"
     assert action["inputs"]["path"]["default"] == "."
     assert action["inputs"]["fail-on"]["default"] == "fail"
+    assert action["inputs"]["profile"]["default"] == "production"
     assert any(step.get("uses") == "actions/setup-python@v6" for step in action["runs"]["steps"])
     commands = "\n".join(step.get("run", "") for step in action["runs"]["steps"])
     assert 'python -m pip install "${{ github.action_path }}"' in commands
     assert 'dataproduct-kit ci "${{ inputs.path }}"' in commands
+    assert '--profile "${{ inputs.profile }}"' in commands
     assert '--format "${{ inputs.format }}"' in commands
     assert '--sarif "${{ inputs.sarif }}"' in commands
 

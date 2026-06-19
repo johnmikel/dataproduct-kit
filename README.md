@@ -132,7 +132,6 @@ include = ["data-products/**"]
 exclude = ["data-products/sandbox/**"]
 profile = "production"
 fail_on = "warn"
-profile = "production"
 ```
 
 You can also use the bundled GitHub Action:
@@ -143,7 +142,6 @@ You can also use the bundled GitHub Action:
     path: "."
     profile: "production"
     fail-on: "warn"
-    profile: "production"
     format: "github"
     sarif: "dataproduct-kit.sarif.json"
 ```

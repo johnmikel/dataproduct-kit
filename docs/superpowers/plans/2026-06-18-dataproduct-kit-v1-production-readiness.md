@@ -903,7 +903,7 @@ git commit -m "feat: scaffold data products from CSV"
 - Modify: `tests/test_cli.py`
 - Modify: `src/dataproduct_kit/finding_codes.py` if doctor emits finding-like codes
 
-- [ ] **Step 1: Write failing doctor unit test**
+- [x] **Step 1: Write failing doctor unit test**
 
 Create `tests/test_doctor.py`:
 
@@ -937,7 +937,7 @@ def test_doctor_reports_production_gaps(tmp_path: Path) -> None:
     assert any("agent_constraints" in item for item in result["next_steps"])
 ```
 
-- [ ] **Step 2: Write failing CLI doctor test**
+- [x] **Step 2: Write failing CLI doctor test**
 
 Add to `tests/test_cli.py`:
 
@@ -954,7 +954,7 @@ def test_cli_doctor_outputs_next_steps(tmp_path: Path) -> None:
     assert "production readiness" in result.output
 ```
 
-- [ ] **Step 3: Run tests and verify they fail**
+- [x] **Step 3: Run tests and verify they fail**
 
 Run:
 
@@ -964,7 +964,7 @@ Run:
 
 Expected: fail because doctor does not exist.
 
-- [ ] **Step 4: Implement doctor inspection**
+- [x] **Step 4: Implement doctor inspection**
 
 Create `src/dataproduct_kit/doctor.py`:
 
@@ -1004,7 +1004,7 @@ def _next_step(code: str) -> str:
     return mapping.get(code, f"Resolve finding {code}.")
 ```
 
-- [ ] **Step 5: Add CLI output**
+- [x] **Step 5: Add CLI output**
 
 In `src/dataproduct_kit/cli.py` add:
 
@@ -1022,7 +1022,7 @@ def doctor(path: Path, profile: ReadinessProfile = "production", format: Literal
 
 Catch `ManifestLoadError` the same way `_load_or_exit` does.
 
-- [ ] **Step 6: Run doctor tests**
+- [x] **Step 6: Run doctor tests**
 
 Run:
 
@@ -1032,7 +1032,7 @@ Run:
 
 Expected: pass.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/dataproduct_kit/doctor.py src/dataproduct_kit/cli.py tests/test_doctor.py tests/test_cli.py
@@ -1048,7 +1048,7 @@ git commit -m "feat: add production readiness doctor"
 - Modify: `tests/test_release_readiness.py`
 - Create/modify: `docs/json-output.md`
 
-- [ ] **Step 1: Write failing action metadata test**
+- [x] **Step 1: Write failing action metadata test**
 
 Update `tests/test_ci.py::test_action_metadata_runs_ci_command`:
 
@@ -1057,7 +1057,7 @@ assert action["inputs"]["profile"]["default"] == "production"
 assert '--profile "${{ inputs.profile }}"' in commands
 ```
 
-- [ ] **Step 2: Write failing JSON contract test**
+- [x] **Step 2: Write failing JSON contract test**
 
 Add to `tests/test_ci.py`:
 
@@ -1081,7 +1081,7 @@ def test_ci_json_contains_stable_core_fields(tmp_path: Path) -> None:
     assert "policy" in payload["products"][0]["trust_report"]
 ```
 
-- [ ] **Step 3: Run tests and verify they fail**
+- [x] **Step 3: Run tests and verify they fail**
 
 Run:
 
@@ -1091,7 +1091,7 @@ Run:
 
 Expected: fail until action metadata and output profile are wired.
 
-- [ ] **Step 4: Update `action.yml`**
+- [x] **Step 4: Update `action.yml`**
 
 Add input:
 
@@ -1112,12 +1112,12 @@ dataproduct-kit ci "${{ inputs.path }}" \
   --sarif "${{ inputs.sarif }}"
 ```
 
-- [ ] **Step 5: Ensure JSON includes profile**
+- [x] **Step 5: Ensure JSON includes profile**
 
 `render_json_suite` should already serialize `ValidationSuiteReport`. Confirm
 `profile` appears at the top level. If not, update the model or renderer.
 
-- [ ] **Step 6: Add JSON compatibility docs**
+- [x] **Step 6: Add JSON compatibility docs**
 
 Create `docs/json-output.md`:
 
@@ -1140,7 +1140,7 @@ Minor releases may add fields. They will not remove or rename these core fields
 without a major version.
 ```
 
-- [ ] **Step 7: Run action/output tests**
+- [x] **Step 7: Run action/output tests**
 
 Run:
 
@@ -1150,7 +1150,7 @@ Run:
 
 Expected: pass.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add action.yml src/dataproduct_kit/ci.py src/dataproduct_kit/models.py tests/test_ci.py tests/test_release_readiness.py docs/json-output.md
@@ -1170,7 +1170,7 @@ git commit -m "feat: expose readiness profiles in CI outputs"
 - Modify: `CHANGELOG.md`
 - Modify: `tests/test_release_readiness.py`
 
-- [ ] **Step 1: Write failing docs presence test**
+- [x] **Step 1: Write failing docs presence test**
 
 Add to `tests/test_release_readiness.py`:
 
@@ -1188,7 +1188,7 @@ def test_v1_docs_cover_profiles_from_csv_and_json_contract() -> None:
     assert "status" in json_output and "products" in json_output
 ```
 
-- [ ] **Step 2: Run docs test and verify it fails**
+- [x] **Step 2: Run docs test and verify it fails**
 
 Run:
 
@@ -1198,7 +1198,7 @@ Run:
 
 Expected: fail until docs exist and README is updated.
 
-- [ ] **Step 3: Update README**
+- [x] **Step 3: Update README**
 
 Revise the opening description to:
 
@@ -1226,7 +1226,7 @@ dataproduct-kit doctor data-products/customers
 dataproduct-kit ci data-products/customers --profile starter
 ```
 
-- [ ] **Step 4: Create readiness profile docs**
+- [x] **Step 4: Create readiness profile docs**
 
 Create `docs/readiness-profiles.md` with:
 
@@ -1236,7 +1236,7 @@ Create `docs/readiness-profiles.md` with:
 - Recommended GitHub Action profile: `production`.
 - Regulated caveat: use only when teams can maintain full classifications and warning-free gates.
 
-- [ ] **Step 5: Create from-csv docs**
+- [x] **Step 5: Create from-csv docs**
 
 Create `docs/from-csv.md` with:
 
@@ -1246,7 +1246,7 @@ Create `docs/from-csv.md` with:
 - How to run `doctor`.
 - How to graduate from `starter` to `production`.
 
-- [ ] **Step 6: Update CI adoption docs**
+- [x] **Step 6: Update CI adoption docs**
 
 Modify `docs/ci-adoption.md` GitHub Action example to include:
 
@@ -1256,11 +1256,11 @@ profile: "production"
 
 Explain `starter` versus `production`.
 
-- [ ] **Step 7: Update finding codes docs**
+- [x] **Step 7: Update finding codes docs**
 
 Add all `profile.*` finding codes to `docs/finding-codes.md`.
 
-- [ ] **Step 8: Update roadmap and changelog**
+- [x] **Step 8: Update roadmap and changelog**
 
 Update `ROADMAP.md` so v1 production readiness includes:
 
@@ -1271,7 +1271,7 @@ Update `ROADMAP.md` so v1 production readiness includes:
 
 Update `CHANGELOG.md` under Unreleased with the same user-facing bullets.
 
-- [ ] **Step 9: Run docs tests**
+- [x] **Step 9: Run docs tests**
 
 Run:
 
@@ -1281,7 +1281,7 @@ Run:
 
 Expected: pass.
 
-- [ ] **Step 10: Commit**
+- [x] **Step 10: Commit**
 
 ```bash
 git add README.md docs/ci-adoption.md docs/readiness-profiles.md docs/from-csv.md docs/finding-codes.md docs/suppressions.md ROADMAP.md CHANGELOG.md tests/test_release_readiness.py
@@ -1296,7 +1296,7 @@ git commit -m "docs: document v1 production readiness workflow"
   - `scripts/smoke-install.sh`
   - relevant tests or docs
 
-- [ ] **Step 1: Run focused feature tests**
+- [x] **Step 1: Run focused feature tests**
 
 Run:
 
@@ -1306,7 +1306,7 @@ Run:
 
 Expected: all pass.
 
-- [ ] **Step 2: Run full test suite**
+- [x] **Step 2: Run full test suite**
 
 Run:
 
@@ -1316,7 +1316,7 @@ Run:
 
 Expected: all pass.
 
-- [ ] **Step 3: Run Ruff**
+- [x] **Step 3: Run Ruff**
 
 Run:
 
@@ -1326,7 +1326,7 @@ Run:
 
 Expected: no lint errors.
 
-- [ ] **Step 4: Run pip check**
+- [x] **Step 4: Run pip check**
 
 Run:
 
@@ -1336,7 +1336,7 @@ Run:
 
 Expected: no broken requirements.
 
-- [ ] **Step 5: Run release verification script**
+- [x] **Step 5: Run release verification script**
 
 Run:
 
@@ -1346,7 +1346,7 @@ PYTHON=.venv/bin/python ./scripts/verify.sh
 
 Expected: pytest, Ruff, pip check, build, twine check, and wheel smoke install pass.
 
-- [ ] **Step 6: Manually verify v1 quickstarts**
+- [x] **Step 6: Manually verify v1 quickstarts**
 
 Use a temp directory:
 
@@ -1366,12 +1366,12 @@ printf 'customer_id,created_at\ncust_001,2026-06-01T00:00:00Z\n' > customers.csv
 
 Expected: demo passes; CSV scaffold commands run and produce actionable starter output.
 
-- [ ] **Step 7: Fix any verification defects**
+- [x] **Step 7: Fix any verification defects**
 
 If any verification fails, write the smallest failing regression test, fix the
 defect, rerun the failing command, then rerun full verification.
 
-- [ ] **Step 8: Final commit**
+- [x] **Step 8: Final commit**
 
 If verification caused changes:
 

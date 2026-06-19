@@ -41,7 +41,7 @@ Update `CHANGELOG.md`:
 
 ```diff
 -## v0.4.0 - Unreleased
-+## v0.4.0 - 2026-06-17
++## v0.4.0 - 2026-06-19
 ```
 
 Commit that changelog-only change:

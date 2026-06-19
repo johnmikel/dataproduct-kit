@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.4.0 - Unreleased
+## v0.4.0 - 2026-06-19
 
 - Add repository config with CI discovery filters and default `fail_on` policy.
 - Add suppression support with expiry validation and SARIF suppression metadata.

@@ -176,7 +176,7 @@ def test_release_checklist_documents_v040_cut_steps() -> None:
     assert "git checkout main" in docs
     assert "git status --short --branch" in docs
     assert "./scripts/verify.sh" in docs
-    assert "v0.4.0 - 2026-06-17" in docs
+    assert "v0.4.0 - 2026-06-19" in docs
     assert "git tag -a v0.4.0" in docs
     assert "git push origin v0.4.0" in docs
     assert "target: testpypi" in docs

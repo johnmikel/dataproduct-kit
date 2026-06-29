@@ -41,17 +41,26 @@ def test_manifest_includes_docs_examples_and_scripts_in_sdist() -> None:
     assert "include dataproduct-kit.toml" in manifest
     assert "recursive-include docs *.md" in manifest
     assert "recursive-include examples *.yaml *.csv" in manifest
+    assert "recursive-include tests *.py *.json" in manifest
     assert "recursive-include scripts *.sh" in manifest
 
 
 def test_ci_adoption_docs_and_finding_codes_are_present() -> None:
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
     ci_docs = (ROOT / "docs/ci-adoption.md").read_text(encoding="utf-8")
     finding_docs = (ROOT / "docs/finding-codes.md").read_text(encoding="utf-8")
     suppression_docs = (ROOT / "docs/suppressions.md").read_text(encoding="utf-8")
 
     assert "dataproduct-kit ci" in ci_docs
+    assert "## Copy-paste GitHub Action quickstart" in ci_docs
     assert "johnmikel/dataproduct-kit@v0.4.0" in ci_docs
+    assert 'path: "data-products"' in ci_docs
+    assert 'profile: "production"' in ci_docs
+    assert 'fail-on: "warn"' in ci_docs
+    assert 'sarif: "dataproduct-kit.sarif.json"' in ci_docs
     assert "github/codeql-action/upload-sarif@v4" in ci_docs
+    assert "dataproduct-kit init from-dbt" in ci_docs
+    assert "Copy-paste GitHub Action quickstart" in readme
     assert "schema.missing_column" in finding_docs
     assert "freshness.stale" in finding_docs
     assert "policy.unknown_sensitive_field" in finding_docs
@@ -92,6 +101,7 @@ def test_v1_docs_cover_profiles_from_csv_and_json_contract() -> None:
     assert "dataproduct-kit report demo --format markdown" in readme
     assert "dataproduct-kit context demo --metric churn_rate --format json" in readme
     assert "dataproduct-kit init from-csv" in readme
+    assert "dataproduct-kit init from-dbt" in readme
     assert "starter" in profiles and "production" in profiles and "regulated" in profiles
     assert "TODO" in from_csv
     assert "status" in json_output and "products" in json_output

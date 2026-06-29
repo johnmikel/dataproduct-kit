@@ -86,6 +86,24 @@ def test_cli_init_from_csv_generates_project(tmp_path: Path) -> None:
     assert (out / "data/customers.csv").exists()
 
 
+def test_cli_init_from_dbt_generates_project(tmp_path: Path) -> None:
+    from dataproduct_kit.cli import app
+
+    runner = CliRunner()
+    manifest = Path(__file__).resolve().parents[1] / "tests/fixtures/dbt/manifest.json"
+    out = tmp_path / "orders-product"
+
+    result = runner.invoke(
+        app,
+        ["init", "from-dbt", str(manifest), "--model", "fct_orders", "--out", str(out)],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "scaffolded dbt model fct_orders" in result.output
+    assert (out / "dataproduct.yaml").exists()
+    assert (out / "contract.yaml").exists()
+
+
 def test_cli_validate_json_returns_machine_readable_report(tmp_path: Path) -> None:
     from dataproduct_kit.cli import app
 

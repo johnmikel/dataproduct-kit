@@ -1,0 +1,6 @@
+invoice_id,account_id,region,booking_status,net_revenue,booked_at
+inv_001,acct_001,na,booked,1200.00,2026-06-16T09:00:00Z
+inv_002,acct_002,emea,booked,850.50,2026-06-16T10:00:00Z
+inv_003,acct_003,apac,booked,430.25,2026-06-16T11:00:00Z
+inv_004,acct_004,na,refunded,125.00,2026-06-16T12:00:00Z
+inv_005,acct_005,emea,booked,2200.75,2026-06-16T13:00:00Z

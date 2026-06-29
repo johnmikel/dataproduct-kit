@@ -1,0 +1,17 @@
+metrics:
+  - name: net_revenue
+    label: Net Revenue
+    description: Sum of booked revenue after refunds and credits.
+    dataset: revenue
+    expression: "sum(net_revenue)"
+    grain: month
+    dimensions: [region]
+dimensions:
+  - name: region
+    dataset: revenue
+    column: region
+    type: string
+entities:
+  - name: account
+    dataset: revenue
+    key: account_id

@@ -1,0 +1,18 @@
+id: finance_revenue
+name: Finance Revenue Data Product
+domain: finance
+version: "1.0.0"
+description: Trusted net revenue metric for finance close and planning workflows.
+owner:
+  name: Finance Analytics
+  email: finance-analytics@example.com
+  team: Finance
+datasets:
+  - id: revenue
+    path: data/revenue.csv
+    format: csv
+    table: revenue
+    freshness:
+      column: booked_at
+      max_age_hours: 72
+      reference_time: "2026-06-17T00:00:00Z"

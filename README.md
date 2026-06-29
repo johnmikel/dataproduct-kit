@@ -56,6 +56,17 @@ The CSV scaffold creates starter manifests with inferred columns and TODO
 governance fields. See [docs/from-csv.md](docs/from-csv.md) for the graduation
 path from a local starter to a production gate.
 
+## Import from dbt
+
+```bash
+dataproduct-kit init from-dbt target/manifest.json --model fct_orders --out data-products/fct-orders
+```
+
+The dbt scaffold reads model and column metadata from `manifest.json`, maps dbt
+column types into a starter contract, and creates TODO governance fields. It
+does not connect to the warehouse or export data; replace the generated
+`data/<model>.csv` path or add a local sample before validating the product.
+
 ## Develop locally
 
 ```bash
@@ -150,7 +161,9 @@ profile = "production"
 fail_on = "warn"
 ```
 
-You can also use the bundled GitHub Action:
+You can also use the bundled GitHub Action. See the
+[Copy-paste GitHub Action quickstart](docs/ci-adoption.md#copy-paste-github-action-quickstart)
+for a complete pull request workflow with SARIF upload:
 
 ```yaml
 - uses: johnmikel/dataproduct-kit@v0.4.0
@@ -222,6 +235,8 @@ The validator returns `fail` for issues such as:
 Runnable examples live under `examples/`:
 
 - `examples/pass/saas-churn`
+- `examples/pass/finance-revenue`
+- `examples/pass/healthcare-appointments`
 - `examples/fail/schema-drift`
 - `examples/fail/stale-data`
 - `examples/fail/broken-metric`

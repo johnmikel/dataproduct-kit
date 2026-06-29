@@ -86,6 +86,12 @@ dataproduct-kit export osi demo
 dataproduct-kit emit openlineage demo
 ```
 
+## More examples
+
+A finance net revenue data product lives under
+[examples/pass/finance-revenue](examples/pass/finance-revenue), validated by
+`dataproduct-kit validate` and `dataproduct-kit ci examples/pass`.
+
 You can also validate with machine-readable output:
 
 ```bash

@@ -1,6 +1,9 @@
 # dataproduct-kit
 
 [![CI](https://github.com/johnmikel/dataproduct-kit/actions/workflows/ci.yml/badge.svg)](https://github.com/johnmikel/dataproduct-kit/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/dataproduct-kit.svg)](https://pypi.org/project/dataproduct-kit/)
+[![Python](https://img.shields.io/pypi/pyversions/dataproduct-kit.svg)](https://pypi.org/project/dataproduct-kit/)
+[![License](https://img.shields.io/pypi/l/dataproduct-kit.svg)](LICENSE)
 
 `dataproduct-kit` is the open source CI gate for agent-safe data products.
 It validates contracts, quality checks, freshness, semantic metrics, policy
@@ -15,13 +18,26 @@ freshness context, lineage, and policy constraints.
 
 `dataproduct-kit` makes that trust context explicit and testable in a local repo.
 
-## Quickstart after release
+## Install
 
-For local branch testing before a public release, use the editable install in
-[Develop locally](#develop-locally).
+For CLI use, `pipx` keeps `dataproduct-kit` isolated from project dependencies:
 
 ```bash
 pipx install dataproduct-kit
+```
+
+You can also install it into an existing Python environment:
+
+```bash
+python -m pip install dataproduct-kit
+```
+
+For local branch testing and contribution work, use the editable install in
+[Develop locally](#develop-locally).
+
+## Quickstart
+
+```bash
 dataproduct-kit init demo demo --template saas-churn
 dataproduct-kit ci demo --profile starter
 dataproduct-kit report demo --format markdown
@@ -225,8 +241,10 @@ Maintainer release notes live in [docs/publishing.md](docs/publishing.md) and
 
 ## Project status
 
-This is `v0.4-alpha`. The local CLI and SaaS churn demo are usable, but the
-manifest profile and standards exports may change before a stable release.
+The current public release is `v0.4.0` on PyPI. The local CLI, SaaS churn demo,
+CSV scaffold, readiness profiles, CI JSON output, GitHub Action, and report
+generation are usable. The manifest profile and standards exports may still
+evolve before a stable `v1.0` release.
 
 See [ROADMAP.md](ROADMAP.md) for planned standards depth, ecosystem adapters,
 and agent/platform integrations.

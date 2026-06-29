@@ -7,13 +7,24 @@ from typer.testing import CliRunner
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_passing_example_validates() -> None:
+def test_passing_examples_validate() -> None:
     from dataproduct_kit.cli import app
 
-    result = CliRunner().invoke(app, ["validate", str(ROOT / "examples/pass/saas-churn")])
+    expected_examples = {"saas-churn", "finance-revenue", "healthcare-appointments"}
+    example_dirs = {
+        path.name
+        for path in (ROOT / "examples/pass").iterdir()
+        if path.is_dir() and (path / "dataproduct.yaml").exists()
+    }
 
-    assert result.exit_code == 0, result.output
-    assert "status: pass" in result.output
+    assert expected_examples <= example_dirs
+
+    runner = CliRunner()
+    for example in sorted(example_dirs):
+        result = runner.invoke(app, ["validate", str(ROOT / f"examples/pass/{example}")])
+
+        assert result.exit_code == 0, result.output
+        assert "status: pass" in result.output
 
 
 def test_failing_examples_fail_for_expected_primary_reason() -> None:

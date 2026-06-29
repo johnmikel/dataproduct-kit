@@ -1,0 +1,17 @@
+metrics:
+  - name: completed_appointment_rate
+    label: Completed Appointment Rate
+    description: Share of appointments completed during the reporting grain.
+    dataset: appointments
+    expression: "sum(case when appointment_status = 'completed' then 1 else 0 end)::double / nullif(count(*), 0)"
+    grain: month
+    dimensions: [specialty]
+dimensions:
+  - name: specialty
+    dataset: appointments
+    column: specialty
+    type: string
+entities:
+  - name: clinic
+    dataset: appointments
+    key: clinic_id

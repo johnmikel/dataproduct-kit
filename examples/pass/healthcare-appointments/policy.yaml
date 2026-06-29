@@ -1,0 +1,13 @@
+allowed_purposes:
+  - operations_reporting
+  - capacity_planning
+  - agent_context
+access_notes: Use de-identified appointment metrics only; never expose patient-level rows.
+sensitive_fields:
+  - patient_token
+agent_constraints:
+  - Agents may use approved aggregate appointment metrics only.
+  - Agents must not infer patient identity or clinical details.
+  - Agents must include freshness and quality status with answers.
+bi_constraints:
+  - BI dashboards must aggregate by specialty or clinic only.

@@ -14,6 +14,7 @@ from dataproduct_kit.ci import (
 )
 from dataproduct_kit.context import build_agent_context
 from dataproduct_kit.csv_scaffold import scaffold_from_csv
+from dataproduct_kit.dbt_scaffold import scaffold_from_dbt_manifest
 from dataproduct_kit.doctor import inspect_project
 from dataproduct_kit.loader import ManifestLoadError, load_project
 from dataproduct_kit.profiles import ReadinessProfile
@@ -55,6 +56,21 @@ def init_from_csv(
         typer.echo(str(error), err=True)
         raise typer.Exit(1) from error
     typer.echo(f"scaffolded CSV data product at {out}")
+
+
+@init_app.command("from-dbt")
+def init_from_dbt(
+    manifest_path: Annotated[Path, typer.Argument(help="dbt manifest.json file.")],
+    model: Annotated[str, typer.Option("--model", help="dbt model name, alias, or unique id.")],
+    out: Annotated[Path, typer.Option("--out", help="Output data product directory.")],
+) -> None:
+    """Scaffold starter manifests from a dbt manifest model node."""
+    try:
+        scaffold_from_dbt_manifest(manifest_path, model, out)
+    except ValueError as error:
+        typer.echo(str(error), err=True)
+        raise typer.Exit(1) from error
+    typer.echo(f"scaffolded dbt model {model} at {out}")
 
 
 @app.command()

@@ -1,0 +1,39 @@
+{
+  "metadata": {
+    "dbt_schema_version": "https://schemas.getdbt.com/dbt/manifest/v12.json"
+  },
+  "nodes": {
+    "model.analytics.fct_orders": {
+      "resource_type": "model",
+      "name": "fct_orders",
+      "alias": "fct_orders",
+      "database": "analytics",
+      "schema": "mart",
+      "relation_name": "\"analytics\".\"mart\".\"fct_orders\"",
+      "description": "Order facts for revenue and operations reporting.",
+      "columns": {
+        "order_id": {
+          "name": "order_id",
+          "description": "Stable order identifier.",
+          "data_type": "varchar",
+          "meta": {
+            "classification": "internal"
+          }
+        },
+        "ordered_at": {
+          "name": "ordered_at",
+          "description": "Timestamp when the order was placed.",
+          "data_type": "timestamp"
+        },
+        "net_revenue": {
+          "name": "net_revenue",
+          "description": "Revenue after discounts and refunds.",
+          "data_type": "numeric",
+          "meta": {
+            "classification": "confidential"
+          }
+        }
+      }
+    }
+  }
+}

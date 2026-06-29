@@ -39,7 +39,12 @@ value. See [readiness-profiles.md](readiness-profiles.md) for profile behavior
 and [suppressions.md](suppressions.md) for temporary exception handling with
 expiry dates.
 
-## Reusable GitHub Action
+## Copy-paste GitHub Action quickstart
+
+Use this workflow when data products live under `data-products/` and warnings
+should block pull requests. Start with `profile: "starter"` for initial rollout,
+then switch to `profile: "production"` once owners, SLAs, policies, and metrics
+are complete.
 
 ```yaml
 name: Data Product Trust
@@ -60,7 +65,7 @@ jobs:
 
       - uses: johnmikel/dataproduct-kit@v0.4.0
         with:
-          path: "."
+          path: "data-products"
           profile: "production"
           fail-on: "warn"
           format: "github"
@@ -75,6 +80,19 @@ jobs:
 The action installs `dataproduct-kit` from the checked-out action source, applies
 the selected readiness profile, emits GitHub annotation commands for findings,
 and writes SARIF for audit evidence.
+
+## dbt project onboarding
+
+For dbt projects, start by scaffolding a data product from the compiled manifest:
+
+```bash
+dataproduct-kit init from-dbt target/manifest.json --model fct_orders --out data-products/fct-orders
+```
+
+The importer uses dbt model and column metadata only. It does not query the
+warehouse, copy data, or infer governance policy. Replace the generated
+`data/<model>.csv` placeholder or add a small local sample before relying on
+validation in CI, then complete owner, purpose, sensitivity, and metric fields.
 
 ## Recommended repository shape
 

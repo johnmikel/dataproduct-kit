@@ -1,0 +1,53 @@
+version: "0.1"
+dataset: appointments
+schema:
+  - name: appointment_id
+    type: string
+    nullable: false
+    classification: internal
+  - name: patient_token
+    type: string
+    nullable: false
+    classification: restricted
+  - name: clinic_id
+    type: string
+    nullable: false
+    classification: internal
+  - name: specialty
+    type: string
+    nullable: false
+    classification: internal
+  - name: appointment_status
+    type: string
+    nullable: false
+    classification: internal
+  - name: lead_time_days
+    type: integer
+    nullable: false
+    classification: internal
+  - name: appointment_date
+    type: date
+    nullable: false
+    classification: internal
+  - name: updated_at
+    type: timestamp
+    nullable: false
+    classification: internal
+quality_checks:
+  - name: appointment_id_not_null
+    type: not_null
+    column: appointment_id
+  - name: appointment_id_unique
+    type: unique
+    column: appointment_id
+  - name: appointment_status_values
+    type: accepted_values
+    column: appointment_status
+    values: ["scheduled", "completed", "canceled"]
+  - name: non_negative_lead_time
+    type: min
+    column: lead_time_days
+    value: 0
+  - name: enough_rows
+    type: row_count_min
+    value: 5

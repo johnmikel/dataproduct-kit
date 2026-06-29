@@ -1,0 +1,13 @@
+allowed_purposes:
+  - revenue_reporting
+  - finance_planning
+  - agent_context
+access_notes: Use aggregated revenue metrics; do not expose account-level records to agents.
+sensitive_fields:
+  - account_id
+  - net_revenue
+agent_constraints:
+  - Agents may use the approved net_revenue metric only.
+  - Agents must include freshness and quality status with answers.
+bi_constraints:
+  - BI dashboards must use the semantic net_revenue definition.

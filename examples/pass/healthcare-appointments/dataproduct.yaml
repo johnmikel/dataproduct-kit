@@ -1,0 +1,18 @@
+id: healthcare_appointments
+name: Healthcare Appointments Data Product
+domain: healthcare
+version: "1.0.0"
+description: De-identified appointment access metrics for clinic operations.
+owner:
+  name: Care Operations Analytics
+  email: care-ops-analytics@example.com
+  team: Care Operations
+datasets:
+  - id: appointments
+    path: data/appointments.csv
+    format: csv
+    table: appointments
+    freshness:
+      column: updated_at
+      max_age_hours: 48
+      reference_time: "2026-06-17T00:00:00Z"

@@ -1,0 +1,45 @@
+version: "0.1"
+dataset: revenue
+schema:
+  - name: invoice_id
+    type: string
+    nullable: false
+    classification: internal
+  - name: account_id
+    type: string
+    nullable: false
+    classification: confidential
+  - name: region
+    type: string
+    nullable: false
+    classification: internal
+  - name: booking_status
+    type: string
+    nullable: false
+    classification: internal
+  - name: net_revenue
+    type: number
+    nullable: false
+    classification: confidential
+  - name: booked_at
+    type: timestamp
+    nullable: false
+    classification: internal
+quality_checks:
+  - name: invoice_id_not_null
+    type: not_null
+    column: invoice_id
+  - name: invoice_id_unique
+    type: unique
+    column: invoice_id
+  - name: booking_status_values
+    type: accepted_values
+    column: booking_status
+    values: ["booked", "refunded"]
+  - name: non_negative_net_revenue
+    type: min
+    column: net_revenue
+    value: 0
+  - name: enough_rows
+    type: row_count_min
+    value: 5

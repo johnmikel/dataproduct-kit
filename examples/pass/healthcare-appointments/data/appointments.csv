@@ -1,0 +1,6 @@
+appointment_id,patient_token,clinic_id,specialty,appointment_status,lead_time_days,appointment_date,updated_at
+appt_001,patient_001,clinic_001,primary_care,completed,5,2026-06-15,2026-06-16T08:00:00Z
+appt_002,patient_002,clinic_001,primary_care,scheduled,7,2026-06-18,2026-06-16T09:00:00Z
+appt_003,patient_003,clinic_002,cardiology,completed,14,2026-06-14,2026-06-16T10:00:00Z
+appt_004,patient_004,clinic_002,cardiology,canceled,10,2026-06-16,2026-06-16T11:00:00Z
+appt_005,patient_005,clinic_003,dermatology,completed,3,2026-06-15,2026-06-16T12:00:00Z

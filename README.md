@@ -5,151 +5,93 @@
 [![Python](https://img.shields.io/pypi/pyversions/dataproduct-kit.svg)](https://pypi.org/project/dataproduct-kit/)
 [![License](https://img.shields.io/pypi/l/dataproduct-kit.svg)](LICENSE)
 
-`dataproduct-kit` is the open source CI gate for agent-safe data products.
-It validates contracts, quality checks, freshness, semantic metrics, policy
-constraints, and evidence outputs before AI agents consume data-product context.
+**A CLI and GitHub Action that turn data-product trust — contracts, quality, freshness, semantics, and policy — into a testable CI gate, before BI users or AI agents ever consume the data.**
+
+`dataproduct-kit` treats a data product as a versioned artifact with a contract, not a table you discover after the fact. You declare a product in four manifest files, and the tool runs real SQL-backed checks against your data, produces a pass/warn/fail trust report with stable finding codes, and fails your pull request when the product drifts out of contract — the same shift-left discipline teams already apply to application code.
 
 ## Why this exists
 
-Enterprise data products are increasingly consumed by BI users, platform teams,
-and AI agents. The hard part is not just finding data; it is knowing whether the
-data has an owner, a contract, a stable metric definition, quality checks,
-freshness context, lineage, and policy constraints.
+Enterprise data is increasingly consumed not just by analysts and dashboards, but by platform teams and LLM agents. The hard problem is no longer *finding* data — it is knowing whether a dataset has an owner, a stable schema contract, agreed metric definitions, quality and freshness guarantees, and policy constraints on how it may be used.
 
-`dataproduct-kit` makes that trust context explicit and testable in a local repo.
+Most tooling answers that *after* the data is published: catalogs, observability dashboards, and incident alerts that fire once something already broke. `dataproduct-kit` moves the trust check left. It makes the contract explicit in the repository and enforces it in CI, so a broken schema, a stale dataset, an undefined metric, or a policy gap fails the build the same way a failing unit test does.
+
+It is deliberately scoped. It does **not** answer natural-language questions, generate SQL, sync to a live catalog, or hand an agent row-level access. Those are explicit non-goals (see [Project status](#project-status)). The product is the trust gate itself.
 
 ## Install
 
-For CLI use, `pipx` keeps `dataproduct-kit` isolated from project dependencies:
+For CLI use, `pipx` keeps the tool isolated from your project's dependencies:
 
 ```bash
 pipx install dataproduct-kit
 ```
 
-You can also install it into an existing Python environment:
+Or install into an existing environment:
 
 ```bash
 python -m pip install dataproduct-kit
 ```
 
-For local branch testing and contribution work, use the editable install in
-[Develop locally](#develop-locally).
+Requires Python 3.11+. Published on [PyPI](https://pypi.org/project/dataproduct-kit/) (current release: `0.4.0`).
 
 ## Quickstart
 
+Scaffold the bundled SaaS-churn demo, gate it, and inspect the report. The demo ships with local CSV data and runs entirely on an in-memory DuckDB — no cloud account or running database required.
+
 ```bash
-dataproduct-kit init demo demo --template saas-churn
-dataproduct-kit ci demo --profile starter
-dataproduct-kit report demo --format markdown
+dataproduct-kit init demo demo --template saas-churn   # scaffold a data product
+dataproduct-kit validate demo                          # -> status: pass (exit 0)
+dataproduct-kit ci demo --profile starter              # repo-style suite check
+dataproduct-kit report demo --format markdown          # human-readable trust report
 dataproduct-kit context demo --metric churn_rate --format json
 ```
 
-## Bring your own CSV
+`validate` exits `0` for `pass`/`warn` and `1` for `fail`, so it drops straight into any CI runner. (Pass `--fail-on warn` to also fail on warnings.)
 
-```bash
-dataproduct-kit init from-csv data/customers.csv --out data-products/customers
-dataproduct-kit doctor data-products/customers
-dataproduct-kit ci data-products/customers --profile starter
+## How it works
+
+A data product is a directory with four source-of-truth manifests:
+
+| File               | Declares                                                            |
+| ------------------ | ------------------------------------------------------------------ |
+| `dataproduct.yaml` | Product identity, owner, datasets, and freshness SLA               |
+| `contract.yaml`    | Schema fields, classifications, and built-in quality checks        |
+| `semantic.yaml`    | Approved metrics, dimensions, entities, and their expressions      |
+| `policy.yaml`      | Allowed purposes, sensitive fields, and AI/BI usage constraints    |
+
+The validation engine loads the declared local CSV data into **in-memory DuckDB** and runs real SQL-backed checks rather than static linting:
+
+- **Schema** — required-column presence, type-castability against the declared contract, null/blank values in non-nullable fields.
+- **Quality** — `unique`, `not_null`, `accepted_values`, `min`/`max`, `expression`, and `row_count_min` checks executed over the data.
+- **Freshness** — measured against the dataset's declared SLA.
+- **Semantics** — metrics, dimensions, and entities that reference unknown datasets/columns, or metrics with invalid SQL expressions.
+- **Policy** — sensitive fields that reference columns absent from the contract, plus missing allowed purposes or access notes.
+
+Every issue is emitted as a finding with a **stable, machine-readable code** — `schema.missing_column`, `schema.type_mismatch`, `freshness.stale`, `semantic.unknown_dimension`, `policy.unknown_sensitive_field`, and others — so CI gates, dashboards, and policy exceptions can key off codes that stay compatible across the `0.x` line. The result is a `TrustReport` with an overall `pass` / `warn` / `fail` status. See [docs/finding-codes.md](docs/finding-codes.md) for the full taxonomy.
+
+```
+manifests (yaml) ──► loader ──► DuckDB (in-memory, local CSV)
+                                   │
+       schema · quality · freshness · semantic · policy validators
+                                   │
+                            TrustReport (pass/warn/fail + finding codes)
+                                   │
+        validate (text/json) · report (json/markdown) · ci (text/github/json + SARIF) · context · exports
 ```
 
-The CSV scaffold creates starter manifests with inferred columns and TODO
-governance fields. See [docs/from-csv.md](docs/from-csv.md) for the graduation
-path from a local starter to a production gate.
+## CI gate
 
-## Import from dbt
-
-```bash
-dataproduct-kit init from-dbt target/manifest.json --model fct_orders --out data-products/fct-orders
-```
-
-The dbt scaffold reads model and column metadata from `manifest.json`, maps dbt
-column types into a starter contract, and creates TODO governance fields. It
-does not connect to the warehouse or export data; replace the generated
-`data/<model>.csv` path or add a local sample before validating the product.
-
-## Develop locally
-
-```bash
-python3 -m venv .venv
-.venv/bin/python -m pip install -e ".[dev]"
-```
-
-## Try the SaaS churn demo
-
-```bash
-dataproduct-kit init demo demo --template saas-churn
-dataproduct-kit ci demo --profile starter
-dataproduct-kit report demo --format markdown
-dataproduct-kit context demo --metric churn_rate --format json
-dataproduct-kit export odcs demo
-dataproduct-kit export osi demo
-dataproduct-kit emit openlineage demo
-```
-
-You can also validate with machine-readable output:
-
-```bash
-dataproduct-kit validate demo --format json
-dataproduct-kit validate demo --fail-on warn
-```
-
-Expected validation output:
-
-```text
-status: pass
-```
-
-The Markdown report starts like this:
-
-```markdown
-# Trust Report: SaaS Churn Data Product
-
-| Field | Value |
-| --- | --- |
-| Product ID | saas_churn |
-| Overall status | pass |
-```
-
-## Manifest model
-
-A data product directory contains four source-of-truth files:
-
-- `dataproduct.yaml`: product identity, owner, datasets, freshness SLA.
-- `contract.yaml`: schema fields, classifications, and built-in quality checks.
-- `semantic.yaml`: approved metrics, dimensions, entities, and expressions.
-- `policy.yaml`: allowed purposes, sensitive fields, and AI/BI usage constraints.
-
-The bundled demo uses local CSV data and DuckDB, so it needs no cloud account or
-running database.
-
-Generate JSON Schema for editor integration or manifest authoring:
-
-```bash
-dataproduct-kit schema dataproduct
-dataproduct-kit schema all --out schemas
-```
-
-## Validate
-
-```bash
-dataproduct-kit validate demo
-```
-
-The command exits with `0` for `pass` or `warn`, and `1` for `fail`.
-
-For repository-wide pull request checks, use the CI command:
+The `ci` command discovers every directory containing a `dataproduct.yaml` below a path, validates each product, and emits a suite summary. It supports multiple output formats and can write **SARIF** for upload to code scanning.
 
 ```bash
 dataproduct-kit ci . --profile production --format text
 dataproduct-kit ci . --profile production --format github --fail-on warn --sarif dataproduct-kit.sarif.json
 ```
 
-The CI command discovers every directory containing `dataproduct.yaml` below the
-path, validates each data product, emits a suite summary, and can write SARIF for
-audit evidence or code-scanning upload. Use `starter` for local onboarding and
-`production` for pull request gates; see
-[docs/readiness-profiles.md](docs/readiness-profiles.md) for the full profile
-behavior.
+Readiness profiles control strictness: `starter` for local onboarding, `production` for pull-request gates, and `regulated` for the strictest governance posture. The `doctor` command reports which gaps stand between a product and a higher profile:
+
+```bash
+dataproduct-kit doctor data-products/customers --profile production
+```
 
 Repository defaults can live in `dataproduct-kit.toml`:
 
@@ -161,11 +103,12 @@ profile = "production"
 fail_on = "warn"
 ```
 
-You can also use the bundled GitHub Action. See the
-[Copy-paste GitHub Action quickstart](docs/ci-adoption.md#copy-paste-github-action-quickstart)
-for a complete pull request workflow with SARIF upload:
+### GitHub Action
+
+A reusable composite action wraps the CLI:
 
 ```yaml
+# Pin to a published tag/ref of this repository.
 - uses: johnmikel/dataproduct-kit@v0.4.0
   with:
     path: "."
@@ -175,100 +118,114 @@ for a complete pull request workflow with SARIF upload:
     sarif: "dataproduct-kit.sarif.json"
 ```
 
-## Reports and agent context
+See [docs/ci-adoption.md](docs/ci-adoption.md) for a complete pull-request workflow with SARIF upload, and [docs/ci-rollout.md](docs/ci-rollout.md) for staging the gate into an existing repo.
+
+## Onboarding existing data
+
+You rarely start from a template. Two scaffolds bootstrap manifests from data you already have:
 
 ```bash
-dataproduct-kit report demo --format json
-dataproduct-kit report demo --format markdown
+# From any CSV: infers columns and stubs TODO governance fields
+dataproduct-kit init from-csv data/customers.csv --out data-products/customers
+
+# From a dbt manifest: reads model + column metadata from manifest.json
+dataproduct-kit init from-dbt target/manifest.json --model fct_orders --out data-products/fct-orders
+```
+
+The dbt scaffold reads metadata from `manifest.json` only — it does not connect to a warehouse or export data. Point the generated `data/<model>.csv` path at a local sample before validating. See [docs/from-csv.md](docs/from-csv.md) for the graduation path from a local starter to a production gate.
+
+## Agent-safe context
+
+The `context` command returns the metadata an agent or BI tool needs to use a metric responsibly — its definition, freshness, governing policy, and lineage:
+
+```bash
 dataproduct-kit context demo --metric churn_rate --format json
 ```
 
-The context command returns metric definition, freshness, policy, and lineage
-metadata. It deliberately does not answer business questions or generate SQL.
+By design, it returns *metadata only*. It does not answer business questions and does not generate SQL — a deliberate governance stance that keeps the trust boundary explicit. The context bundle also enforces policy: it requires the metric's product to allow the `agent_context` purpose and refuses to emit metrics that expose sensitive dimensions. An MCP server and warehouse-backed agent integrations are roadmap items, not current behavior.
 
-Example context fields:
+## Standards-aligned exports
 
-```json
-{
-  "metric": {
-    "name": "churn_rate",
-    "dataset": "subscriptions",
-    "grain": "month"
-  },
-  "quality_status": "pass"
-}
-```
-
-## Standards outputs
+The same local profile can be exported into the open data-product ecosystem's interchange formats:
 
 ```bash
-dataproduct-kit export odcs demo
-dataproduct-kit export osi demo
-dataproduct-kit emit openlineage demo
+dataproduct-kit export odcs demo          # ODCS-compatible data contract JSON
+dataproduct-kit export osi demo           # OSI-inspired semantic model JSON
+dataproduct-kit emit openlineage demo     # OpenLineage-compatible validation events (JSONL)
 ```
 
-Exports are standards-aligned from the local profile:
-
-- ODCS-compatible data contract JSON.
-- OSI-inspired semantic model JSON.
-- OpenLineage-compatible validation event JSONL.
-
-Use `--out` to write standards exports to files:
+These are *compatible/inspired* shapes derived from the local profile; the payloads tag themselves accordingly (e.g. ODCS `apiVersion: v3.1.0-compatible`) and are not yet certified against the published ODCS, OSI, or OpenLineage schemas. Tightening that compatibility is on the [roadmap](ROADMAP.md). You can also generate JSON Schema for the manifest files to power editor autocompletion and validation:
 
 ```bash
-dataproduct-kit export odcs demo --out contract.json
-dataproduct-kit export osi demo --out semantic.json
+dataproduct-kit schema dataproduct
+dataproduct-kit schema all --out schemas
 ```
 
-## What this catches
+## What it catches
 
 The validator returns `fail` for issues such as:
 
-- Missing required columns.
-- Values that cannot cast to the declared contract type.
+- Missing required columns, or values that cannot cast to the declared contract type.
 - Null or blank values in non-nullable fields.
-- Failed quality checks such as uniqueness, accepted values, and row count.
-- Stale data based on the dataset freshness SLA.
+- Failed quality checks — uniqueness, accepted values, min/max, row-count, expressions.
+- Data that is stale against its dataset freshness SLA.
 - Metrics that reference unknown dimensions or invalid expressions.
 - Policy fields that reference columns not declared in the contract.
 
-Runnable examples live under `examples/`:
+Runnable pass/fail examples live under [`examples/`](examples):
 
-- `examples/pass/saas-churn`
-- `examples/pass/finance-revenue`
-- `examples/pass/healthcare-appointments`
-- `examples/fail/schema-drift`
-- `examples/fail/stale-data`
-- `examples/fail/broken-metric`
-- `examples/fail/policy-gap`
+```
+examples/pass/saas-churn                examples/fail/schema-drift
+examples/pass/finance-revenue           examples/fail/stale-data
+examples/pass/healthcare-appointments   examples/fail/broken-metric
+                                        examples/fail/policy-gap
+```
 
-See [docs/usage-scenarios.md](docs/usage-scenarios.md) for concrete usage
-scenarios. See [docs/ci-adoption.md](docs/ci-adoption.md) for pull request gate
-setup, [docs/readiness-profiles.md](docs/readiness-profiles.md) for profile
-behavior, [docs/from-csv.md](docs/from-csv.md) for CSV onboarding,
-[docs/json-output.md](docs/json-output.md) for the stable automation contract,
-[docs/finding-codes.md](docs/finding-codes.md) for stable finding codes, and
-[docs/suppressions.md](docs/suppressions.md) for expiring exceptions. See
-[docs/compatibility.md](docs/compatibility.md) for supported automation surfaces
-and [docs/ci-rollout.md](docs/ci-rollout.md) for a staged production rollout.
-Maintainer release notes live in [docs/publishing.md](docs/publishing.md) and
-[docs/release-checklist.md](docs/release-checklist.md).
+Each `examples/fail/*` product fails with the precise finding code for its defect (`schema.missing_column`, `freshness.stale`, `semantic.unknown_dimension`, `policy.unknown_sensitive_field`).
 
 ## Project status
 
-The current public release is `v0.4.0` on PyPI. The local CLI, SaaS churn demo,
-CSV scaffold, readiness profiles, CI JSON output, GitHub Action, and report
-generation are usable. The manifest profile and standards exports may still
-evolve before a stable `v1.0` release.
+**Alpha (`v0.4.0` on PyPI).** The local CLI, the SaaS-churn demo, CSV and dbt scaffolds, readiness profiles, the `doctor`/`report`/`context` commands, repo-wide CI with JSON/SARIF output, and the GitHub Action are all usable today. The manifest profile and standards exports may still evolve before a stable `v1.0`.
 
-See [ROADMAP.md](ROADMAP.md) for planned standards depth, ecosystem adapters,
-and agent/platform integrations.
+Honest caveats worth knowing before you adopt it:
 
-## Verify
+- **Local-only validation.** Checks run over local CSV via DuckDB. There is no warehouse connectivity yet — the enterprise framing is currently a demo-scale proof of concept (warehouse-backed demos are on the roadmap).
+- **Standards exports are compatible, not certified.** See [Standards-aligned exports](#standards-aligned-exports).
+- **No live agent integration.** "Agent-safe context" is a metadata-only JSON command; an MCP server is a roadmap item (v0.6).
+
+Explicit **non-goals** for v1, by design: natural-language querying, text-to-SQL execution, live catalog sync, cloud credentials, and agent access to row-level data. See [ROADMAP.md](ROADMAP.md).
+
+## Development
 
 ```bash
-.venv/bin/python -m pytest
-.venv/bin/python -m ruff check .
-.venv/bin/python -m pip check
-./scripts/verify.sh
+python3 -m venv .venv
+.venv/bin/python -m pip install -e ".[dev]"
 ```
+
+Verify a working tree:
+
+```bash
+.venv/bin/python -m pytest        # test suite (80 tests)
+.venv/bin/python -m ruff check .  # lint
+./scripts/verify.sh               # full local gate
+```
+
+The project is CI-gated across Python 3.11 / 3.12 / 3.13, builds and `twine check`s the package, smoke-tests the built wheel, and publishes to PyPI via trusted publishing (OIDC). Contribution guidelines are in [CONTRIBUTING.md](CONTRIBUTING.md); security policy in [SECURITY.md](SECURITY.md).
+
+## Documentation
+
+| Topic                         | Doc                                                      |
+| ----------------------------- | -------------------------------------------------------- |
+| Usage scenarios               | [docs/usage-scenarios.md](docs/usage-scenarios.md)       |
+| CI adoption + PR gate         | [docs/ci-adoption.md](docs/ci-adoption.md)               |
+| Staged CI rollout             | [docs/ci-rollout.md](docs/ci-rollout.md)                 |
+| Readiness profiles            | [docs/readiness-profiles.md](docs/readiness-profiles.md) |
+| CSV onboarding                | [docs/from-csv.md](docs/from-csv.md)                     |
+| Stable finding codes          | [docs/finding-codes.md](docs/finding-codes.md)           |
+| JSON automation contract      | [docs/json-output.md](docs/json-output.md)               |
+| Expiring suppressions         | [docs/suppressions.md](docs/suppressions.md)             |
+| Automation surfaces           | [docs/compatibility.md](docs/compatibility.md)           |
+
+## License
+
+Apache-2.0. See [LICENSE](LICENSE).
